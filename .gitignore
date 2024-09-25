@@ -1,0 +1,39 @@
+# debug
+/run_instructions.md
+
+# Ignore target directory
+/target/
+
+# properties contain keys, check template
+src/main/resources/application.properties
+src/main/resources/key.json
+
+
+# Ignore .vscode directory
+/.vscode/
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+
