@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -20,13 +22,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 
+@Slf4j
 @Service
 public class WebhookUtils {
 
     @Value("${facebook.appsecret}") 
     private String appSecret;
     
-    private static final Logger logger = LoggerFactory.getLogger(WebhookUtils.class);
    
     public boolean validateSignature(String payload, String signature, String appSecret) {
         try {
@@ -48,7 +50,7 @@ public class WebhookUtils {
             // Compare the computed signature with the provided signature
             return MessageDigest.isEqual(expectedSignature.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            logger.error("Error validating signature", e);
+            log.error("Error validating signature", e);
             return false;
         }
     }
@@ -61,19 +63,19 @@ public class WebhookUtils {
         if (signature != null && signature.startsWith("sha256=")) {
             signature = signature.substring(7); // Removing 'sha256='
         } else {
-            logger.info("Invalid signature format");
+            log.error("Invalid signature format");
             return false;
         }
 
         if (validateSignature(payload, signature, appSecret)) {
-            logger.info("Signature verification passed!");
+            log.debug("Signature verification passed!");
             return true;
         } else {
-            logger.info("Signature verification failed!");
+            log.error("Signature verification failed!");
             return false;
         }
     } catch (Exception e) {
-        logger.error("An error occurred while validating the Signature request.", e);
+        log.error("An error occurred while validating the Signature request.", e);
         return false;
     }
     }

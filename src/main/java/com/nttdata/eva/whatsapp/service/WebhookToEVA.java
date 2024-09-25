@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowire;
@@ -67,22 +68,38 @@ public class WebhookToEVA {
     }
 
     public static EVARequestTuple handleInteractive(WebhookData.Message message) {
-        String subtype = ((JsonNode) message.getInteractive().get("type")).asText();
+        
+        //String subtype = ((JsonNode) message.getInteractive().get("type")).asText();
+        
         Map<String, Object> interactiveMap = message.getInteractive();
+        String subtype = (String) interactiveMap.get("type");
 
         if ("button_reply".equals(subtype)) {
             log.info("Handling interactive button message");
-            JsonNode buttonReply = (JsonNode) interactiveMap.get("button_reply");
-            String EVA_content = buttonReply.get("id").asText();
-            ObjectNode EVA_context = null;
-            return new EVARequestTuple(EVA_content, EVA_context);
+            Object buttonReplyObj = interactiveMap.get("button_reply");
+            if (buttonReplyObj instanceof Map) {
+                JsonNode buttonReply = objectMapper.convertValue(buttonReplyObj, JsonNode.class);
+                String EVA_content = buttonReply.get("id").asText();
+                ObjectNode EVA_context = null;
+                return new EVARequestTuple(EVA_content, EVA_context);
+                }
+                else {
+                    log.error("button_reply is not a Map");
+                    return null;
+                }
         } else if ("list_reply".equals(subtype)) {
             log.info("Handling interactive list message");
-            JsonNode listReply = (JsonNode) interactiveMap.get("list_reply");
-            String EVA_content = listReply.get("id").asText();
-            ;
-            ObjectNode EVA_context = null;
-            return new EVARequestTuple(EVA_content, EVA_context);
+            Object listReplyObj = interactiveMap.get("list_reply");
+            if (listReplyObj instanceof Map) {
+                JsonNode listReply = objectMapper.convertValue(listReplyObj, JsonNode.class);
+                String EVA_content = listReply.get("id").asText();
+                ObjectNode EVA_context = null;
+                return new EVARequestTuple(EVA_content, EVA_context);
+            }
+            else {
+                log.error("list_reply is not a Map");
+                return null;
+            }
         } else {
             log.warn("Interactive message subtype not supported: {}", subtype);
             return null;
@@ -157,8 +174,13 @@ public class WebhookToEVA {
         String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
                 instance, orgUUID, envUUID, botUUID, channelUUID).trim();
         StringBuilder urlBuilder = new StringBuilder(baseUrl);
-        if (session.getEvaSessionCode() != null) {
-            urlBuilder.append("/").append(session.getEvaSessionCode());
+        String sessionCode = session.getEvaSessionCode();
+        if (sessionCode!= null) {
+            urlBuilder.append("/").append(sessionCode);
+            log.info("Session code is "+ sessionCode);
+        }else
+        {
+            log.info("Session code is null");
         }
 
         RestTemplate restTemplate = new RestTemplate();
@@ -187,7 +209,7 @@ public class WebhookToEVA {
             URI uri = new URI(baseUrl);
             log.info("Sending message to EVA: {}", data);
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(data, headers);
-            Map<String, Object> response = restTemplate.postForObject(uri, requestEntity, Map.class);
+            Map<String, Object> response = restTemplate.postForObject(urlBuilder.toString(), requestEntity, Map.class);
             String jsonResponse = objectMapper.writeValueAsString(response);
 
             ResponseModel responseModel = objectMapper.readValue(jsonResponse, ResponseModel.class);

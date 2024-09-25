@@ -125,8 +125,8 @@ public class EvaAnswerToWhatsapp {
     }
 
     public void sendToWhatsappAPI(ObjectNode bodyAPIcall) {
-        log.info("Sending message to WhatsApp API");
-        log.info("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
+        log.debug("Sending message to WhatsApp API");
+        log.debug("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();

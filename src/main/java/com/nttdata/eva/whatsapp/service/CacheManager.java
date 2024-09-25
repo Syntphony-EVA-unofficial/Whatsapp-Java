@@ -1,18 +1,15 @@
 package com.nttdata.eva.whatsapp.service;
+
 import org.springframework.stereotype.Service;
 
 import com.nttdata.eva.whatsapp.model.UserSessionData;
 
 import java.util.HashMap;
+import java.util.Map;
 
-@Service
 public class CacheManager {
 
-    private final HashMap<String, UserSessionData> cacheUser;
-
-    public CacheManager() {
-        cacheUser = new HashMap<>();
-    }
+    private final Map<String, UserSessionData> cacheUser = new HashMap<>();
 
     public void addToCache(String userKey, UserSessionData contextUserDTO) {
         if (this.containsUser(userKey))
@@ -21,9 +18,12 @@ public class CacheManager {
     }
 
     public UserSessionData getFromCache(String userKey) {
-        if (this.containsUser(userKey))
+        if (this.containsUser(userKey)) {
             return cacheUser.get(userKey);
-        else return null;
+        } else {
+            UserSessionData newSessionData = new UserSessionData();
+            return newSessionData;
+        }
     }
 
     public void removeFromCache(String userKey) {

@@ -42,12 +42,12 @@ public class ImageMessage  {
                 return true;
             } else {
                 for (ConstraintViolation<ImageModel> violation : violations) {
-                    log.info("Validation error: {}", violation.getMessage());
+                    log.debug("Validation error: {}", violation.getMessage());
                 }
                 return false;
             }
         } catch (Exception e) {
-            log.info("Validation error: {}", e.getMessage());
+            log.debug("Validation error: {}", e.getMessage());
             return false;
         }
     }

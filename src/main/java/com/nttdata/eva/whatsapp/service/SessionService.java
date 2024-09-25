@@ -32,8 +32,12 @@ import java.net.URISyntaxException;
 @Service
 public class SessionService {
 
-    @Autowired
-    private CacheManager cacheManager;
+    private final CacheManager cacheManager;
+
+    public SessionService(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
+
 
     @Value("${eva.env.client.id}")
     private String clientId;
@@ -52,11 +56,7 @@ public class SessionService {
 
     public void InitCache(String userID) {
         this.userID = userID;
-        if (cacheManager.containsUser(userID)) {
-            sessionData = cacheManager.getFromCache(userID);
-        } else {
-            sessionData = new UserSessionData();
-        }
+        sessionData = cacheManager.getFromCache(userID);
         log.info("UserID set to: {}", userID);
     }
     

@@ -39,7 +39,6 @@ public class WebhookService {
     private EvaAnswerToWhatsapp evaAnswerToWhatsapp; // Autowire the EvaAnswerToWhatsapp service
 
     public void processIncomingMessage(String requestBody, HttpServletRequest request) {
-        log.info("Processing incoming message");
         
         try {
             // Parse the request body into a JsonNode
@@ -47,7 +46,7 @@ public class WebhookService {
             try {
                 // Convert JsonNode to WebhookData object
                 WebhookData webhookData = objectMapper.treeToValue(data, WebhookData.class);
-                log.info("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
+                log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
                 
                 // Extract the message
                 WebhookData.Message message = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMessages().get(0);
@@ -86,10 +85,7 @@ public class WebhookService {
         }
     }
     
-    private void getWhatsappAPICalls(ResponseModel evaResponse, String from) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getWhatsappAPICalls'");
-    }
+
 
     @Value("${facebook.verificationtoken}")
     private String verificationToken;
