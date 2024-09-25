@@ -1,0 +1,33 @@
+# Application Config
+
+# Logging level
+logging.level.root=INFO
+
+# Whatsapp API and Meta application
+facebook.accesstoken=EAAUdY....
+facebook.appid=143968...
+facebook.appsecret=846246d8...
+facebook.verificationtoken=1234
+facebook.phoneid=3771.....
+
+# Eva variables related to the Organization or account being used
+eva.org.name=EVA-SINGAPORE
+eva.org.keycloak=https://keycloak-americas-admin.eva.bot
+eva.org.uuid=2a71b30b-3f4d-....
+
+# Eva variables related to the Environments being used
+eva.env.client.id=eva-singapore-dev
+eva.env.secret=RHHaShFNRsXKT2....
+eva.env.apikey=32aa2aea-37a5-...
+eva.env.uuid=6212aa9e-6987-...
+eva.env.instance=api-americas-instance1.eva.bot
+
+# Eva variables related to the Bot being used
+eva.bot.uuid=c83fc547-7f30-442d-...
+eva.bot.channeluuid=04f669bf-...
+
+# STT supported languages
+google.stt.supportedlanguages=id-ID,en-US,es-ES
+
+#for docker
+server.port=${PORT:8080}

@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "facebook.appSecret",
+  "type": "java.lang.String",
+  "description": "A description for 'facebook.appSecret'"
+}]}

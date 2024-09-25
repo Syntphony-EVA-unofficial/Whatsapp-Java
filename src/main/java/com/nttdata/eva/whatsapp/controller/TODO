@@ -1,0 +1,23 @@
+
+If a marketing template message is not delivered to a given user due to the limit, Cloud API will return error code 131049 with the description “This message was not delivered to maintain a healthy ecosystem.”
+
+
+
+
+Implement get namespace from buissinesid as part of template sending 
+Retrieve a Template Namespace
+The message template namespace is required to send messages using the message templates.
+
+To get the namespace for a template, send a GET request to the /{whatsapp-business-account-ID} endpoint and include the message_template_namespace field.
+
+Example Request
+Formatted for readability.
+curl -i -X GET "https://graph.facebook.com/v20.0/{whatsapp-business-account-ID}
+  ?fields=message_template_namespace
+  &access_token={system-user-access-token}"
+On success, a JSON object with the WhatsApp Business Account ID and namespace is returned:
+
+{
+    "id": "1972385232742141",
+    "message_template_namespace": "12abcdefghijk_34lmnop" 
+}
