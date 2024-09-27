@@ -3,6 +3,7 @@ package com.nttdata.eva.whatsapp.service;
 import org.checkerframework.checker.units.qual.s;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class EvaAnswerToWhatsapp {
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -128,7 +132,6 @@ public class EvaAnswerToWhatsapp {
         log.debug("Sending message to WhatsApp API");
         log.debug("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
 
-        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
 
         headers.set("Content-Type", "application/json");

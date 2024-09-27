@@ -32,6 +32,10 @@ import java.net.URISyntaxException;
 @Service
 public class SessionService {
 
+    
+    @Autowired
+    private RestTemplate restTemplate;
+
     private final CacheManager cacheManager;
 
     public SessionService(CacheManager cacheManager) {
@@ -82,6 +86,9 @@ public class SessionService {
 
         sessionData.setEvaSessionCode(sessionCode);
     }
+    public void deleteToken() {
+        sessionData.setEvaToken(null);
+    }
 
     private String generateToken() {
         log.info("Enter to function Token Gen TIME: {}", Instant.now());
@@ -90,7 +97,6 @@ public class SessionService {
 
             URI uri = new URI(
             String.format("%s/auth/realms/%s/protocol/openid-connect/token", keycloakUrl, organization).trim());
-            RestTemplate restTemplate = new RestTemplate();
             restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 
             final MultiValueMap<String, String> formVars = new LinkedMultiValueMap<>();

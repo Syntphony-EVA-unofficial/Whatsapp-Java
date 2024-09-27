@@ -25,21 +25,18 @@ import java.io.IOException;
 @Slf4j
 @Service
 public class WebhookService {
-
-    
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
     @Autowired
     private SessionService sessionService; // Autowire the SessionService
-
     @Autowired
     private WebhookToEVA webhookToEVA; // Autowire the WebhookToEVA service
-    
     @Autowired 
     private EvaAnswerToWhatsapp evaAnswerToWhatsapp; // Autowire the EvaAnswerToWhatsapp service
+    
+    @Value("${facebook.verificationtoken}")
+    private String verificationToken;
 
     public void processIncomingMessage(String requestBody, HttpServletRequest request) {
-        
         try {
             // Parse the request body into a JsonNode
             JsonNode data = objectMapper.readTree(requestBody);
@@ -47,29 +44,20 @@ public class WebhookService {
                 // Convert JsonNode to WebhookData object
                 WebhookData webhookData = objectMapper.treeToValue(data, WebhookData.class);
                 log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
-                
                 // Extract the message
                 WebhookData.Message message = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMessages().get(0);
-                
                 // Convert WebhookData to EVA request
-                EVARequestTuple evaRequest = WebhookToEVA.convert(webhookData, message);
-                
+                EVARequestTuple evaRequest = webhookToEVA.convert(webhookData, message);
                 if (evaRequest != null) {
-                    
                     //Use to load values from cache and generate a new token if needed
                     sessionService.InitCache(message.getFrom());
-                    
                     ResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService);
-                    
                     ArrayList<ObjectNode> whatsappAPICalls = evaAnswerToWhatsapp.getWhatsappAPICalls(evaResponse, message.getFrom());
-
                     evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls);
-
                     //session.saveSession();
                 } else {
                     log.warn("Data to send to EVA is empty");
                 }
-                
             } catch (Exception e) {
                 // Handle validation errors
                 try {
@@ -84,11 +72,7 @@ public class WebhookService {
             log.error("An error occurred while processing the request.", e);
         }
     }
-    
 
-
-    @Value("${facebook.verificationtoken}")
-    private String verificationToken;
     public ResponseEntity<String> verify(HttpServletRequest request) {
         log.info("Verifying webhook");
         
