@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nttdata.eva.whatsapp.model.EVARequestTuple;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.model.WebhookData;
-import com.nttdata.eva.whatsapp.utils.AudioSTT;
+import com.nttdata.eva.whatsapp.utils.WhatsappMediaUtils;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -57,9 +58,18 @@ public class WebhookToEVA {
     @Value("${eva.env.apikey}")
     private String apiKey;
 
+    @Value("${facebook.accesstoken}")
+    private String accessToken;
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static EVARequestTuple handleText(WebhookData.Message message) {
+    @Autowired
+    private WhatsappMediaUtils whatsappMediaUtils;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    public EVARequestTuple handleText(WebhookData.Message message) {
         log.info("Handling text message");
         Map<String, Object> textMap = message.getText();
         String EVA_content = (String) textMap.get("body");
@@ -67,10 +77,10 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, EVA_context);
     }
 
-    public static EVARequestTuple handleInteractive(WebhookData.Message message) {
-        
-        //String subtype = ((JsonNode) message.getInteractive().get("type")).asText();
-        
+    public EVARequestTuple handleInteractive(WebhookData.Message message) {
+
+        // String subtype = ((JsonNode) message.getInteractive().get("type")).asText();
+
         Map<String, Object> interactiveMap = message.getInteractive();
         String subtype = (String) interactiveMap.get("type");
 
@@ -82,11 +92,10 @@ public class WebhookToEVA {
                 String EVA_content = buttonReply.get("id").asText();
                 ObjectNode EVA_context = null;
                 return new EVARequestTuple(EVA_content, EVA_context);
-                }
-                else {
-                    log.error("button_reply is not a Map");
-                    return null;
-                }
+            } else {
+                log.error("button_reply is not a Map");
+                return null;
+            }
         } else if ("list_reply".equals(subtype)) {
             log.info("Handling interactive list message");
             Object listReplyObj = interactiveMap.get("list_reply");
@@ -95,8 +104,7 @@ public class WebhookToEVA {
                 String EVA_content = listReply.get("id").asText();
                 ObjectNode EVA_context = null;
                 return new EVARequestTuple(EVA_content, EVA_context);
-            }
-            else {
+            } else {
                 log.error("list_reply is not a Map");
                 return null;
             }
@@ -106,32 +114,21 @@ public class WebhookToEVA {
         }
     }
 
-    public static EVARequestTuple handleAudio(WebhookData.Message message) {
+    public EVARequestTuple handleAudio(WebhookData.Message message) {
         log.info("Handling audio message");
         try {
             Map<String, Object> AudioMap = message.getAudio();
             String audioID = (String) AudioMap.get("id");
-            String audioURL = AudioSTT.getAudioURL(audioID);
-            if (audioURL != null) {
-                byte[] downloadAudio = AudioSTT.getDownloadAudio(audioURL);
-                if (downloadAudio != null) {
-                    log.info("Audio message downloaded successfully");
-                    log.info("The size of the binary data is {} bytes", downloadAudio.length);
-                    String STT_Result = AudioSTT.transcribeFileV2("seu-whatsapp-api", downloadAudio);
-                    if (STT_Result != null) {
-                        String EVA_content = STT_Result;
-                        ObjectNode EVA_context = null;
-                        return new EVARequestTuple(EVA_content, EVA_context);
-                    }
-                }
-            }
+            EVARequestTuple STTResult = whatsappMediaUtils.getSTTFromAudio(audioID);
+            return STTResult;
+
         } catch (Exception e) {
             log.warn("Audio message could not be processed", e);
         }
         return null;
     }
 
-    public static EVARequestTuple handleLocation(WebhookData.Message message) {
+    public EVARequestTuple handleLocation(WebhookData.Message message) {
         log.info("Handling location message");
         String EVA_content = " ";
         ObjectNode locationNode = objectMapper.createObjectNode();
@@ -144,7 +141,7 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
-    public static EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message) {
+    public EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message) {
         try {
             String type = message.getType();
             switch (type) {
@@ -169,21 +166,18 @@ public class WebhookToEVA {
     }
 
     public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService session) {
-        log.info("Sending message to evaBroker (TIME) {}", Instant.now());
 
         String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
                 instance, orgUUID, envUUID, botUUID, channelUUID).trim();
         StringBuilder urlBuilder = new StringBuilder(baseUrl);
         String sessionCode = session.getEvaSessionCode();
-        if (sessionCode!= null) {
+        if (sessionCode != null) {
             urlBuilder.append("/").append(sessionCode);
-            log.info("Session code is "+ sessionCode);
-        }else
-        {
+            log.info("Session code is " + sessionCode);
+        } else {
             log.info("Session code is null");
         }
 
-        RestTemplate restTemplate = new RestTemplate();
         restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 
         HttpHeaders headers = new HttpHeaders();
@@ -192,37 +186,48 @@ public class WebhookToEVA {
         headers.set("OS", "Linux");
         headers.set("USER-REF", session.getUserID());
         headers.set("LOCALE", "en-US");
-        String evaToken = session.getEvaToken();
+
         Map<String, Object> data = new HashMap<>();
-        if (evaToken != null) {
-            headers.setBearerAuth(evaToken);
-            data.put("text", evaRequest.getContent());
-            if (evaRequest.getContext() != null) {
-                data.put("context", evaRequest.getContext());
+        boolean successCall = false;
+        int retryCount = 0;
+        int maxRetries = 2;
+
+        while (!successCall && retryCount < maxRetries) {
+
+            String evaToken = session.getEvaToken();
+            if (evaToken != null) {
+                headers.setBearerAuth(evaToken);
+                data.put("text", evaRequest.getContent());
+                if (evaRequest.getContext() != null) {
+                    data.put("context", evaRequest.getContext());
+                }
+            } else {
+                log.error("EVA Token is null");
+                return null;
             }
-        } else {
-            log.error("EVA Token is null");
-            return null;
+
+            try {
+                log.info("Sending message to EVA: {} at retry {}", data, retryCount);
+                HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(data, headers);
+                Map<String, Object> response = restTemplate.postForObject(urlBuilder.toString(), requestEntity,
+                        Map.class);
+                String jsonResponse = objectMapper.writeValueAsString(response);
+
+                ResponseModel responseModel = objectMapper.readValue(jsonResponse, ResponseModel.class);
+                session.setEvaSessionCode(responseModel.getSessionCode());
+                session.saveSession();
+                return responseModel;
+            } catch (HttpClientErrorException.Unauthorized e) {
+                log.warn("Unauthorized error, refreshing token and retrying: {}", e.getMessage());
+                session.deleteToken();
+                retryCount++;
+            } catch (RestClientException e) {
+                log.error("Error sending message to EVA: {}", e.getMessage());
+            } catch (Exception e) {
+                log.error("Unexpected error sending message to EVA", e);
+            }
         }
 
-        try {
-            URI uri = new URI(baseUrl);
-            log.info("Sending message to EVA: {}", data);
-            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(data, headers);
-            Map<String, Object> response = restTemplate.postForObject(urlBuilder.toString(), requestEntity, Map.class);
-            String jsonResponse = objectMapper.writeValueAsString(response);
-
-            ResponseModel responseModel = objectMapper.readValue(jsonResponse, ResponseModel.class);
-            session.setEvaSessionCode(responseModel.getSessionCode());
-            session.saveSession();
-            return responseModel;
-        }
-
-        catch (RestClientException e) {
-            log.error("Error sending message to EVA: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error sending message to EVA", e);
-        }
         return null;
     }
 
