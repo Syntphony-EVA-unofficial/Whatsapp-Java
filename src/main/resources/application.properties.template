@@ -31,3 +31,7 @@ google.stt.supportedlanguages=id-ID,en-US,es-ES
 
 #for docker
 server.port=${PORT:8080}
+
+#MESSAGE BEHAVIOR CONFIGURATION
+messages.audio.STTEnabled=True   
+messages.audio.STTUrl=http://localhost:8080/eva/v1/stt 
