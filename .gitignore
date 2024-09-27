@@ -37,3 +37,6 @@ src/main/resources/key.json
 hs_err_pid*
 replay_pid*
 
+# Unignore .zip files in bot_template folder
+!eva bot template/*.zip
+
