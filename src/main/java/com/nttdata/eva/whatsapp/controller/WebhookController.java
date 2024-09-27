@@ -1,6 +1,4 @@
 package com.nttdata.eva.whatsapp.controller;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,16 +9,12 @@ import com.nttdata.eva.whatsapp.service.WebhookService;
 import com.nttdata.eva.whatsapp.utils.WebhookUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
+@Slf4j
 @RestController
 public class WebhookController {
-    private static final Logger logger = LoggerFactory.getLogger(WebhookController.class);
 
     @Autowired
     private WebhookService webhookService;

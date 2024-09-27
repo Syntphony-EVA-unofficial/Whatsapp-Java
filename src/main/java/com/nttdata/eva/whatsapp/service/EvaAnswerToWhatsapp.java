@@ -1,8 +1,5 @@
 package com.nttdata.eva.whatsapp.service;
 
-import org.checkerframework.checker.units.qual.s;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -23,7 +20,6 @@ import com.nttdata.eva.whatsapp.messages.LocationMessage;
 import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
 import com.nttdata.eva.whatsapp.messages.TemplateMessage;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
 import java.util.ArrayList;
 
 import lombok.extern.slf4j.Slf4j;

@@ -1,5 +1,97 @@
-{"properties": [{
-  "name": "facebook.appSecret",
-  "type": "java.lang.String",
-  "description": "A description for 'facebook.appSecret'"
-}]}
+{"properties": [
+  {
+    "name": "facebook.appSecret",
+    "type": "java.lang.String",
+    "description": "A description for 'facebook.appSecret'"
+  },
+  {
+    "name": "facebook.appsecret",
+    "type": "java.lang.String",
+    "description": "A description for 'facebook.appsecret'"
+  },
+  {
+    "name": "facebook.appid",
+    "type": "java.lang.String",
+    "description": "A description for 'facebook.appid'"
+  },
+  {
+    "name": "facebook.accesstoken",
+    "type": "java.lang.String",
+    "description": "A description for 'facebook.accesstoken'"
+  },
+  {
+    "name": "facebook.verificationtoken",
+    "type": "java.lang.String",
+    "description": "A description for 'facebook.verificationtoken'"
+  },
+  {
+    "name": "facebook.phoneid",
+    "type": "java.lang.String",
+    "description": "A description for 'facebook.phoneid'"
+  },
+  {
+    "name": "eva.env.client.id",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.env.client.id'"
+  },
+  {
+    "name": "eva.env.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.env.secret'"
+  },
+  {
+    "name": "eva.env.apikey",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.env.apikey'"
+  },
+  {
+    "name": "eva.env.uuid",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.env.uuid'"
+  },
+  {
+    "name": "eva.env.instance",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.env.instance'"
+  },
+  {
+    "name": "eva.bot.uuid",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.bot.uuid'"
+  },
+  {
+    "name": "eva.bot.channeluuid",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.bot.channeluuid'"
+  },
+  {
+    "name": "google.stt.supportedlanguages",
+    "type": "java.lang.String",
+    "description": "A description for 'google.stt.supportedlanguages'"
+  },
+  {
+    "name": "messagesaudio.STTEnabled",
+    "type": "java.lang.String",
+    "description": "A description for 'messages.audio.STTEnabled'"
+  },
+  {
+    "name": "messagesaudio.STTUrl",
+    "type": "java.lang.String",
+    "description": "A description for 'messages.audio.STTUrl'"
+  },
+  {
+    "name": "eva.org.uuid",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.org.uuid'"
+  },
+  {
+    "name": "eva.org.keycloak",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.org.keycloak'"
+  },
+  {
+    "name": "eva.org.name",
+    "type": "java.lang.String",
+    "description": "A description for 'eva.org.name'"
+  }
+]}

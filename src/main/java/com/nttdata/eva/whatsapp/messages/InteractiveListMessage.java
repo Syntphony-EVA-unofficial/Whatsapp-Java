@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Slf4j

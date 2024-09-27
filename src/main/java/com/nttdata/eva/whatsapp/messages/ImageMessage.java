@@ -2,16 +2,10 @@ package com.nttdata.eva.whatsapp.messages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.messages.ImageMessage.ImageModel;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
-
 import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import jakarta.validation.ConstraintViolation;
-import lombok.extern.slf4j.Slf4j;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
