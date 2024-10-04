@@ -39,9 +39,8 @@ Generate a token selecting the App and the permisions for the token.
 * After create a system user, press Assign assets and give full control of the app
 ![](/tutorial%20pictures/add%20asset.png)
 
-7. Going back to developer account, from the side menu Whatsapp/API Setup, copy and save for later the **Phone number ID** ![get phoneid](/tutorial%20pictures/numberid2.png)
 
-8. From the side menu App Setting/Basic, fill in variables.env **APP_ID** and **APP_SECRET** ![get appid](/tutorial%20pictures/app%20secret.png)
+7. From the side menu App Setting/Basic, fill in variables.env **APP_ID** and **APP_SECRET** ![get appid](/tutorial%20pictures/app%20secret.png)
 
 8. From the side menu App Setting/Advanced, copy and save for later API version
 

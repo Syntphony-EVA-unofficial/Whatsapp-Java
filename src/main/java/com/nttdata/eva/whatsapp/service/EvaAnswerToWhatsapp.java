@@ -37,8 +37,6 @@ public class EvaAnswerToWhatsapp {
     @Value("${facebook.accesstoken}")
     private String facebookAccessToken;
 
-    @Value("${facebook.phoneid}")
-    private String facebookPhoneId;
 
     public ArrayList<ObjectNode> getWhatsappAPICalls(ResponseModel evaResponse, String from)
     {
@@ -112,9 +110,9 @@ public class EvaAnswerToWhatsapp {
         return data;
     }
 
-    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls) {
+    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, String facebookPhoneId) {
         for (ObjectNode bodyAPIcall : whatsappAPICalls) {
-            sendToWhatsappAPI(bodyAPIcall);
+            sendToWhatsappAPI(bodyAPIcall, facebookPhoneId);
             try {
                 Thread.sleep(1500); // Wait for 1500 milliseconds
             } catch (InterruptedException e) {
@@ -124,7 +122,7 @@ public class EvaAnswerToWhatsapp {
         }
     }
 
-    public void sendToWhatsappAPI(ObjectNode bodyAPIcall) {
+    public void sendToWhatsappAPI(ObjectNode bodyAPIcall, String facebookPhoneId) {
         log.debug("Sending message to WhatsApp API");
         log.debug("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
 
@@ -136,7 +134,7 @@ public class EvaAnswerToWhatsapp {
 
         HttpEntity<ObjectNode> request = new HttpEntity<>(bodyAPIcall, headers);
 
-        String url = String.format("https://graph.facebook.com/v18.0/%s/messages", facebookPhoneId);
+        String url = String.format("https://graph.facebook.com/v21.0/%s/messages", facebookPhoneId);
 
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 

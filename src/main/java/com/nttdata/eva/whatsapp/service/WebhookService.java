@@ -41,14 +41,18 @@ public class WebhookService {
                 log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
                 // Extract the message
                 WebhookData.Message message = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMessages().get(0);
+                String facebookPhoneId =  webhookData.getEntry().get(0).getChanges().get(0).getValue().getMetadata().getPhone_number_id();
+                log.info("Phone Number " + facebookPhoneId );
+                
                 // Convert WebhookData to EVA request
                 EVARequestTuple evaRequest = webhookToEVA.convert(webhookData, message);
                 if (evaRequest != null) {
                     //Use to load values from cache and generate a new token if needed
-                    sessionService.InitCache(message.getFrom());
+                    String composedUserID = message.getFrom() + "-" + facebookPhoneId;
+                    sessionService.InitCache(composedUserID);
                     ResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService);
                     ArrayList<ObjectNode> whatsappAPICalls = evaAnswerToWhatsapp.getWhatsappAPICalls(evaResponse, message.getFrom());
-                    evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls);
+                    evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, facebookPhoneId);
                     //session.saveSession();
                 } else {
                     log.warn("Data to send to EVA is empty");
