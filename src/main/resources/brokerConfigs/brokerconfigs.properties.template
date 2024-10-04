@@ -1,0 +1,30 @@
+
+
+# Whatsapp API and Meta application
+meta.accesstoken=EAAUdY2mZxxx
+meta.appsecret=846246d82f618xxx
+meta.phoneid=29430
+
+
+# Eva variables related to the Organization or account being used
+eva.org.name=NTTDATA-EMEAL
+eva.org.keycloak=https://keycloak-americas-admin.eva.bot
+eva.org.uuid=48249918-6f7e-xx
+
+# Eva variables related to the Environments being used
+eva.env.client.id=studio
+eva.env.secret=GBtdNWiw41dcxx
+eva.env.apikey=d93ec8b8-ebe6-11exx
+eva.env.uuid=1d87da23-ec13-4701xx
+eva.env.instance=api-americas-instance1.eva.bot
+
+# Eva variables related to the Bot being used
+eva.bot.uuid=9245631e-7c4c-491c-9636-xxx
+eva.bot.channeluuid=6b8aaa43-3cf7-4683-xxx
+
+# STT supported languages
+google.stt.supportedlanguages=id-ID,en-US,es-ES
+
+# MESSAGE BEHAVIOR CONFIGURATION
+google.stt.enabled=False 
+google.stt.url=http://127.0.0.1:8083/transcript

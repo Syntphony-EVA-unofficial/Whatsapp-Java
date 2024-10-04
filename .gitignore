@@ -4,9 +4,7 @@
 # Ignore target directory
 /target/
 
-# properties contain keys, check template
-src/main/resources/application.properties
-src/main/resources/key.json
+
 
 
 # Ignore .vscode directory

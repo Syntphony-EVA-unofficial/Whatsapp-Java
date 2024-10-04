@@ -1,7 +1,6 @@
 package com.nttdata.eva.whatsapp.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,6 +18,7 @@ import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.messages.LocationMessage;
 import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
 import com.nttdata.eva.whatsapp.messages.TemplateMessage;
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import java.util.ArrayList;
 
@@ -34,8 +34,7 @@ public class EvaAnswerToWhatsapp {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${facebook.accesstoken}")
-    private String facebookAccessToken;
+
 
 
     public ArrayList<ObjectNode> getWhatsappAPICalls(ResponseModel evaResponse, String from)
@@ -110,9 +109,10 @@ public class EvaAnswerToWhatsapp {
         return data;
     }
 
-    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, String facebookPhoneId) {
+    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, String facebookPhoneId, BrokerConfiguration brokerConfig) {
+        String facebookAccessToken = brokerConfig.getMetaConfig().getAccessToken();
         for (ObjectNode bodyAPIcall : whatsappAPICalls) {
-            sendToWhatsappAPI(bodyAPIcall, facebookPhoneId);
+            sendToWhatsappAPI(bodyAPIcall, facebookPhoneId, facebookAccessToken);
             try {
                 Thread.sleep(1500); // Wait for 1500 milliseconds
             } catch (InterruptedException e) {
@@ -122,7 +122,7 @@ public class EvaAnswerToWhatsapp {
         }
     }
 
-    public void sendToWhatsappAPI(ObjectNode bodyAPIcall, String facebookPhoneId) {
+    public void sendToWhatsappAPI(ObjectNode bodyAPIcall, String facebookPhoneId, String facebookAccessToken) {
         log.debug("Sending message to WhatsApp API");
         log.debug("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
 

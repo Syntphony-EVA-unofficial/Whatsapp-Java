@@ -2,12 +2,12 @@ package com.nttdata.eva.whatsapp.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.EVARequestTuple;
 
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,44 +18,38 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 
 @Slf4j
 @Service
 public class WhatsappMediaUtils {
-    private List<String> supportedLanguages;
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${messages.audio.STTEnabled:false}")
-    private String audioSTTEnabled; 
-
-    @Value("${messages.audio.STTUrl:null}")
-    private String audioSTTServer;
-
-    @Value("${facebook.accesstoken}")
-    private String audioSTTToken;
-
+    
     @Autowired
     private RestTemplate restTemplate;
 
+    
 
-    private boolean isValidURL(String url) {
-        try {
-            new URL(url);
-            return true;
-        } catch (MalformedURLException e) {
-            return false;
-        }
+private boolean isValidURL(String url) {
+    try {
+        URI uri = new URI(url);
+        uri.toURL();
+        return true;
+    } catch (URISyntaxException | MalformedURLException e) {
+        return false;
     }
+}
 
-    public String getAudioURL(String audioID) {
+    public String getAudioURL(String audioID, String metaToken) {
         String url = String.format("https://graph.facebook.com/v19.0/%s", audioID);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + audioSTTToken);
+        headers.set("Authorization", "Bearer " + metaToken);
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -74,13 +68,17 @@ public class WhatsappMediaUtils {
         }
     }
 
-    public EVARequestTuple getSTTFromAudio(String audioID)
+    public EVARequestTuple getSTTFromAudio(String audioID, BrokerConfiguration brokerConfig)
     {
-        String audioURL = getAudioURL(audioID);
-        if (Boolean.parseBoolean(audioSTTEnabled)) {
+        String audioSTTServer = brokerConfig.getSTTConfig().getUrl();
+        Boolean audioSTTEnabled = brokerConfig.getSTTConfig().getEnabled();
+        String metaToken = brokerConfig.getMetaConfig().getAccessToken();
+
+        String audioURL = getAudioURL(audioID, metaToken);
+        if (audioSTTEnabled) {
             if ((audioSTTServer!=null)&& (isValidURL(audioURL)))
             {
-                String Transcription = callSTTServer(audioURL);
+                String Transcription = callSTTServer(audioURL, metaToken, audioSTTServer);
                 if (Transcription != null && !Transcription.isEmpty()) {
                     return new EVARequestTuple(Transcription, null);
                 }
@@ -92,14 +90,17 @@ public class WhatsappMediaUtils {
         return new EVARequestTuple(null, context);
     }
 
-     private String callSTTServer(String audioURL) {
+
+
+     private String callSTTServer(String audioURL, String metaToken, String audioSTTServer) {
+        
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
 
         
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("url", audioURL);
-        payload.put("token", audioSTTToken);
+        payload.put("token", metaToken);
 
         String requestBody;
             try {

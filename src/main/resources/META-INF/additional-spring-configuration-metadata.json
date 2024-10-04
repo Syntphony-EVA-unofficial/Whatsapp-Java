@@ -1,31 +1,31 @@
 {"properties": [
   {
-    "name": "facebook.appSecret",
+    "name": "meta.appSecret",
     "type": "java.lang.String",
     "description": "A description for 'facebook.appSecret'"
   },
   {
-    "name": "facebook.appsecret",
+    "name": "meta.appsecret",
     "type": "java.lang.String",
     "description": "A description for 'facebook.appsecret'"
   },
   {
-    "name": "facebook.appid",
+    "name": "meta.appid",
     "type": "java.lang.String",
     "description": "A description for 'facebook.appid'"
   },
   {
-    "name": "facebook.accesstoken",
+    "name": "meta.accesstoken",
     "type": "java.lang.String",
     "description": "A description for 'facebook.accesstoken'"
   },
   {
-    "name": "facebook.verificationtoken",
+    "name": "webhook.verificationtoken",
     "type": "java.lang.String",
     "description": "A description for 'facebook.verificationtoken'"
   },
   {
-    "name": "facebook.phoneid",
+    "name": "meta.phoneid",
     "type": "java.lang.String",
     "description": "A description for 'facebook.phoneid'"
   },
@@ -70,16 +70,6 @@
     "description": "A description for 'google.stt.supportedlanguages'"
   },
   {
-    "name": "messagesaudio.STTEnabled",
-    "type": "java.lang.String",
-    "description": "A description for 'messages.audio.STTEnabled'"
-  },
-  {
-    "name": "messagesaudio.STTUrl",
-    "type": "java.lang.String",
-    "description": "A description for 'messages.audio.STTUrl'"
-  },
-  {
     "name": "eva.org.uuid",
     "type": "java.lang.String",
     "description": "A description for 'eva.org.uuid'"
@@ -93,5 +83,15 @@
     "name": "eva.org.name",
     "type": "java.lang.String",
     "description": "A description for 'eva.org.name'"
+  },
+  {
+    "name": "google.stt.url",
+    "type": "java.lang.String",
+    "description": "A description for 'google.stt.STTUrl'"
+  },
+  {
+    "name": "google.stt.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'google.stt.STTEnabled'"
   }
 ]}

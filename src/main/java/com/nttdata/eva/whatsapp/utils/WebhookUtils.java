@@ -20,8 +20,7 @@ import java.security.InvalidKeyException;
 @Service
 public class WebhookUtils {
 
-    @Value("${facebook.appsecret}") 
-    private String appSecret;
+
     
    
     public boolean validateSignature(String payload, String signature, String appSecret) {
@@ -51,7 +50,7 @@ public class WebhookUtils {
 
 
 
-    public boolean checkSignature(HttpServletRequest request,  String payload) {
+    public boolean checkSignature(HttpServletRequest request,  String payload, String appSecret) {
     try {
         String signature = request.getHeader("X-Hub-Signature-256");
         if (signature != null && signature.startsWith("sha256=")) {

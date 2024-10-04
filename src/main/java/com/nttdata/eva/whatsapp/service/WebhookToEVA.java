@@ -3,6 +3,7 @@ package com.nttdata.eva.whatsapp.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.EVARequestTuple;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.model.WebhookData;
@@ -23,32 +24,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 @Service
 public class WebhookToEVA {
 
-    @Value("${eva.env.instance}")
-    private String instance;
-
-    @Value("${eva.org.uuid}")
-    private String orgUUID;
-
-    @Value("${eva.env.uuid}")
-    private String envUUID;
-
-    @Value("${eva.bot.uuid}")
-    private String botUUID;
-
-    @Value("${eva.bot.channeluuid}")
-    private String channelUUID;
-
-    @Value("${eva.env.apikey}")
-    private String apiKey;
-
-    @Value("${facebook.accesstoken}")
-    private String accessToken;
+   
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -103,12 +84,12 @@ public class WebhookToEVA {
         }
     }
 
-    public EVARequestTuple handleAudio(WebhookData.Message message) {
+    public EVARequestTuple handleAudio(WebhookData.Message message, BrokerConfiguration brokerConfig) {
         log.info("Handling audio message");
         try {
             Map<String, Object> AudioMap = message.getAudio();
             String audioID = (String) AudioMap.get("id");
-            EVARequestTuple STTResult = whatsappMediaUtils.getSTTFromAudio(audioID);
+            EVARequestTuple STTResult = whatsappMediaUtils.getSTTFromAudio(audioID, brokerConfig);
             return STTResult;
 
         } catch (Exception e) {
@@ -130,7 +111,7 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
-    public EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message) {
+    public EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message, BrokerConfiguration brokerConfig) {
         try {
             String type = message.getType();
             switch (type) {
@@ -141,7 +122,7 @@ public class WebhookToEVA {
                 case "interactive":
                     return handleInteractive(message);
                 case "audio":
-                    return handleAudio(message);
+                    return handleAudio(message, brokerConfig);
                 default:
                     log.warn("Message type not supported: {}", type);
                     log.info("Message data: {}",
@@ -155,6 +136,11 @@ public class WebhookToEVA {
     }
 
     public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService session) {
+        String instance = session.getBrokerConfig().getEvaConfig().getEnvironment().getInstance();
+        String orgUUID = session.getBrokerConfig().getEvaConfig().getOrganization().getUuid();
+        String envUUID = session.getBrokerConfig().getEvaConfig().getEnvironment().getUuid();
+        String botUUID = session.getBrokerConfig().getEvaConfig().getBot().getUuid();
+        String channelUUID = session.getBrokerConfig().getEvaConfig().getBot().getChanneluuid();
 
         String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
                 instance, orgUUID, envUUID, botUUID, channelUUID).trim();
@@ -169,6 +155,7 @@ public class WebhookToEVA {
 
         restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 
+        String apiKey = session.getBrokerConfig().getEvaConfig().getEnvironment().getApikey();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("API-KEY", apiKey);
@@ -182,6 +169,7 @@ public class WebhookToEVA {
         int maxRetries = 2;
 
         while (!successCall && retryCount < maxRetries) {
+            retryCount++;
 
             String evaToken = session.getEvaToken();
             if (evaToken != null) {
@@ -209,7 +197,6 @@ public class WebhookToEVA {
             } catch (HttpClientErrorException.Unauthorized e) {
                 log.warn("Unauthorized error, refreshing token and retrying: {}", e.getMessage());
                 session.deleteToken();
-                retryCount++;
             } catch (RestClientException e) {
                 log.error("Error sending message to EVA: {}", e.getMessage());
             } catch (Exception e) {

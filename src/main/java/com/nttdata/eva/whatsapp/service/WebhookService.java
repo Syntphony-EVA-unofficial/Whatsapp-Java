@@ -1,11 +1,11 @@
 package com.nttdata.eva.whatsapp.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.EVARequestTuple;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.model.WebhookData;
+
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,12 +15,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 
-import java.io.IOException;
 
 @Slf4j
 @Service
 public class WebhookService {
-    private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired
     private SessionService sessionService; // Autowire the SessionService
     @Autowired
@@ -28,48 +26,33 @@ public class WebhookService {
     @Autowired 
     private EvaAnswerToWhatsapp evaAnswerToWhatsapp; // Autowire the EvaAnswerToWhatsapp service
     
-    @Value("${facebook.verificationtoken}")
+    @Value("${webhook.verificationtoken}")
     private String verificationToken;
 
-    public void processIncomingMessage(String requestBody, HttpServletRequest request) {
-        try {
-            // Parse the request body into a JsonNode
-            JsonNode data = objectMapper.readTree(requestBody);
+    public void processIncomingMessage(WebhookData webhookData, HttpServletRequest request, BrokerConfiguration brokerConfig, String phoneId) {
             try {
                 // Convert JsonNode to WebhookData object
-                WebhookData webhookData = objectMapper.treeToValue(data, WebhookData.class);
-                log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
                 // Extract the message
                 WebhookData.Message message = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMessages().get(0);
-                String facebookPhoneId =  webhookData.getEntry().get(0).getChanges().get(0).getValue().getMetadata().getPhone_number_id();
-                log.info("Phone Number " + facebookPhoneId );
+                log.info("Phone Number " + phoneId );
                 
                 // Convert WebhookData to EVA request
-                EVARequestTuple evaRequest = webhookToEVA.convert(webhookData, message);
+                EVARequestTuple evaRequest = webhookToEVA.convert(webhookData, message, brokerConfig);
                 if (evaRequest != null) {
                     //Use to load values from cache and generate a new token if needed
-                    String composedUserID = message.getFrom() + "-" + facebookPhoneId;
-                    sessionService.InitCache(composedUserID);
+                    String composedUserID = message.getFrom() + "-" + phoneId;
+                    sessionService.InitCache(composedUserID, brokerConfig);
                     ResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService);
                     ArrayList<ObjectNode> whatsappAPICalls = evaAnswerToWhatsapp.getWhatsappAPICalls(evaResponse, message.getFrom());
-                    evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, facebookPhoneId);
+                    evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, phoneId, brokerConfig);
                     //session.saveSession();
                 } else {
                     log.warn("Data to send to EVA is empty");
                 }
             } catch (Exception e) {
                 // Handle validation errors
-                try {
-                    String status = data.get("entry").get(0).get("changes").get(0).get("value").get("statuses").get(0).get("status").asText();
-                    log.info("Message status: {}", status);
-                } catch (Exception ex) {
-                    log.warn("Received unexpected data: {}", data);
-                }
+                
             }
-            
-        } catch (IOException e) {
-            log.error("An error occurred while processing the request.", e);
-        }
     }
 
     public ResponseEntity<String> verify(HttpServletRequest request) {

@@ -1,7 +1,6 @@
 package com.nttdata.eva.whatsapp.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -9,10 +8,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.UserSessionData;
 
 import java.net.URI;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -26,6 +27,7 @@ public class SessionService {
     @Autowired
     private RestTemplate restTemplate;
 
+
     private final CacheManager cacheManager;
 
     public SessionService(CacheManager cacheManager) {
@@ -33,23 +35,17 @@ public class SessionService {
     }
 
 
-    @Value("${eva.env.client.id}")
-    private String clientId;
-
-    @Value("${eva.env.secret}")
-    private String clientSecret;
-
-    @Value("${eva.org.keycloak}")
-    private String keycloakUrl;
-
-    @Value("${eva.org.name}")
-    private String organization;
+    
 
     private String userID;
     private UserSessionData sessionData;
 
-    public void InitCache(String userID) {
+    @Getter
+    private BrokerConfiguration brokerConfig;
+
+    public void InitCache(String userID, BrokerConfiguration brokerConfig) {
         this.userID = userID;
+        this.brokerConfig = brokerConfig;
         sessionData = cacheManager.getFromCache(userID);
         log.info("UserID set to: {}", userID);
     }
@@ -84,6 +80,10 @@ public class SessionService {
         log.info("Enter to function Token Gen TIME: {}", Instant.now());
 
         try {
+            String keycloakUrl = brokerConfig.getEvaConfig().getOrganization().getKeycloak().trim();
+            String organization = brokerConfig.getEvaConfig().getOrganization().getName().trim();
+            String clientid = brokerConfig.getEvaConfig().getEnvironment().getClientId().trim();
+            String secret = brokerConfig.getEvaConfig().getEnvironment().getSecret().trim();
 
             URI uri = new URI(
             String.format("%s/auth/realms/%s/protocol/openid-connect/token", keycloakUrl, organization).trim());
@@ -91,8 +91,8 @@ public class SessionService {
 
             final MultiValueMap<String, String> formVars = new LinkedMultiValueMap<>();
             formVars.set("grant_type", "client_credentials");
-            formVars.set("client_id", clientId.trim());
-            formVars.set("client_secret", clientSecret.trim());
+            formVars.set("client_id", clientid);
+            formVars.set("client_secret", secret);
 
             HttpHeaders headers = new HttpHeaders();    
             headers.set("Content-Type", "application/x-www-form-urlencoded");

@@ -1,6 +1,5 @@
 package com.nttdata.eva.whatsapp.service;
 
-import org.springframework.stereotype.Service;
 
 import com.nttdata.eva.whatsapp.model.UserSessionData;
 
