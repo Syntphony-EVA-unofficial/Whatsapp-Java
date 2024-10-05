@@ -7,13 +7,13 @@
 /.VSCodeCounter/
 
 # Ignore all files in the brokerConfigs directory
-resources/brokerConfigs/*
+src/main/resources/brokerConfigs/*
 
 # Do not ignore files ending in .template in the brokerConfigs directory
-!resources/brokerConfigs/*.template
+!src/main/resources/brokerConfigs/*.template
 
 # Ignore all files in the not used configs directory
-resources/not used configs/*
+src/main/resources/not used configs/*
 
 # Ignore .vscode directory
 /.vscode/
@@ -49,3 +49,5 @@ replay_pid*
 src/main/resources/application.properties.whatsapptemplate
 debugnotes
 cloudbuild.yaml
+src/main/resources/brokerConfigs/TokyoNumberwithTemplate.properties
+src/main/resources/brokerConfigs/TokyoNumberwithTemplate.properties
