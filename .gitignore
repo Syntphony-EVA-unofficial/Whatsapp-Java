@@ -8,6 +8,8 @@
 
 # Ignore all files in the brokerConfigs directory
 src/main/resources/brokerConfigs/*
+src/main/resources/brokerConfigs/TokyoNumberwithTemplate.properties
+src/main/resources/brokerConfigs/UKwithsyntpho.properties
 
 # Do not ignore files ending in .template in the brokerConfigs directory
 !src/main/resources/brokerConfigs/*.template
@@ -49,5 +51,4 @@ replay_pid*
 src/main/resources/application.properties.whatsapptemplate
 debugnotes
 cloudbuild.yaml
-src/main/resources/brokerConfigs/TokyoNumberwithTemplate.properties
-src/main/resources/brokerConfigs/TokyoNumberwithTemplate.properties
+
