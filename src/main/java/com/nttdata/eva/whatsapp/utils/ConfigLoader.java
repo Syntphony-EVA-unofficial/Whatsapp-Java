@@ -1,16 +1,12 @@
 package com.nttdata.eva.whatsapp.utils;
-
-
 import javax.annotation.PostConstruct;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
-
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,19 +19,29 @@ import java.util.Properties;
 @Slf4j
 @Component
 public class ConfigLoader {
+    
+    @Value("${BROKER_CONFIGS_PATH}")
+    private String brokerConfigsPath;
 
     private Map<String, BrokerConfiguration> brokerConfigs = new HashMap<>();
 
     @PostConstruct
     public void init() {
-        try {
-            Files.list(Paths.get(getClass().getClassLoader().getResource("brokerconfigs").toURI()))
-                .filter(path -> path.toString().endsWith(".properties"))
-                .forEach(this::loadProperties);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load properties files", e);
+            try {
+    
+                // Load properties files from the brokerConfigs directory
+                Path configDir = Paths.get(brokerConfigsPath);
+                log.info("Loading properties files from brokerConfigs directory:");
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(configDir, "*.properties")) {
+                    for (Path entry : stream) {
+                        log.info("Loading properties file: " + entry.getFileName());
+                        loadProperties(entry);
+                    }
+                }
+            } catch (IOException e) {
+                log.error("Error executing bash script or loading properties files", e);
+            }
         }
-    }
 
     private void loadProperties(Path path) {
         Properties properties = new Properties();

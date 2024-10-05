@@ -25,6 +25,11 @@ WORKDIR /app
 # Copy the packaged JAR file from the build container
 COPY --from=build-env /app/target/whatsapp-connector-*.jar /app/whatsapp-connector.jar
 
+# Copy the resources directory to the production container
+COPY src/main/resources /app/resources
+
+
+
 # Expose port 8080 (adjust if your app uses a different port)
 EXPOSE 8080
 

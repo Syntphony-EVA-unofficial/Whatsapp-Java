@@ -1,0 +1,15 @@
+services:
+  whatsapp-connector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: us-central1-docker.pkg.dev/seu-whatsapp-api/imagesrepo/java-whatsapp-connector:v2
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - BROKER_CONFIGS_PATH=/app/resources/brokerConfigs
+
+    # Optional: Add volume mounts if needed
+    # volumes:
+    #   - ./config:/app/config

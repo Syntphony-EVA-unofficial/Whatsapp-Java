@@ -1,6 +1,5 @@
 package com.nttdata.eva.whatsapp.utils;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
