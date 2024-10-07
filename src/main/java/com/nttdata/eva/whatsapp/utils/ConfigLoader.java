@@ -31,10 +31,8 @@ public class ConfigLoader {
     
                 // Load properties files from the brokerConfigs directory
                 Path configDir = Paths.get(brokerConfigsPath);
-                log.info("Loading properties files from brokerConfigs directory:");
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(configDir, "*.properties")) {
                     for (Path entry : stream) {
-                        log.info("Loading properties file: " + entry.getFileName());
                         loadProperties(entry);
                     }
                 }

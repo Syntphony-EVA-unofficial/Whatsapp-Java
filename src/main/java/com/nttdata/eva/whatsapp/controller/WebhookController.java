@@ -15,6 +15,9 @@ import com.nttdata.eva.whatsapp.service.WebhookService;
 import com.nttdata.eva.whatsapp.utils.ConfigLoader;
 import com.nttdata.eva.whatsapp.utils.WebhookUtils;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,15 +63,25 @@ public class WebhookController {
                 log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
 
                 phoneId = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMetadata().getPhone_number_id();
-                // Validate the signature
-                if (configLoader.getBrokerConfigs().containsKey(phoneId)) {
-                    brokerConfig = configLoader.getBrokerConfigs().get(phoneId);
+                Map<String, BrokerConfiguration> allBrokerConfigs = configLoader.getBrokerConfigs();
+
+                if (allBrokerConfigs.containsKey(phoneId)) {
+                    brokerConfig = allBrokerConfigs.get(phoneId);
                     // Process the brokerConfig as needed
                 } else {
+
                     log.error("Phone ID {} does not exist in the map", phoneId);
+                    // Get the set of keys
+                    Set<String> keys = allBrokerConfigs.keySet();
+
+                    // Print all keys
+                    for (String key : keys) {
+                        System.out.println(key);
+                    }
+                    
                     return ResponseEntity.status(400).body("Invalid request: Phone ID does not exist.");
                 }
-
+                
             } catch (JsonProcessingException e) {
                 try {
                     String status = data.get("entry").get(0).get("changes").get(0).get("value").get("statuses").get(0).get("status").asText();
@@ -90,9 +103,9 @@ public class WebhookController {
             // Process the incoming message
             webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId);
             return ResponseEntity.ok("Request processed successfully.");
-            } else {
-                return ResponseEntity.ok("Invalid signature.");
-            }
+        } else {
+            return ResponseEntity.ok("Invalid signature.");
+        }
     }
 
     @GetMapping("/test")

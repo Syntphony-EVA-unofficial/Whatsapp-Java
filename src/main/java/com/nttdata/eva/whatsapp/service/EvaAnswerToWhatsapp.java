@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.messages.FlowMessage;
 import com.nttdata.eva.whatsapp.messages.ImageMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveListMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveReplyButtonMessage;
@@ -21,6 +22,7 @@ import com.nttdata.eva.whatsapp.messages.TemplateMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import java.util.ArrayList;
+import java.util.concurrent.Flow;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -97,12 +99,16 @@ public class EvaAnswerToWhatsapp {
             } else if (LocationMessage.validate(answer)) {
                 data = LocationMessage.create(data, answer);
                 modelFound = true;
+            } else if (FlowMessage.validate(answer)) {
+                data = FlowMessage.create(data, answer);
+                modelFound = true;
             }
+
     
             if (modelFound) {
-                System.out.println(data.toString());
+                //System.out.println(data.toString());
             } else {
-                System.out.println("No valid message model found.");
+                log.error("No valid message model found.");
             }
         }
 
@@ -123,8 +129,8 @@ public class EvaAnswerToWhatsapp {
     }
 
     public void sendToWhatsappAPI(ObjectNode bodyAPIcall, String facebookPhoneId, String facebookAccessToken) {
-        log.debug("Sending message to WhatsApp API");
-        log.debug("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
+        log.info("Sending message to WhatsApp API");
+        log.info("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
 
         HttpHeaders headers = new HttpHeaders();
 
@@ -136,13 +142,19 @@ public class EvaAnswerToWhatsapp {
 
         String url = String.format("https://graph.facebook.com/v21.0/%s/messages", facebookPhoneId);
 
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
-        if (response.getStatusCode().value() != 200) {
-            log.error("Response status: {}", response.getStatusCode());
-            log.error("Response headers: {}", response.getHeaders());
-            log.error("Response body: {}", response.getBody());
-            throw new RuntimeException("Failed to send message to WhatsApp API");
+            if (response.getStatusCode().value() != 200) {
+                log.error("Response status: {}", response.getStatusCode());
+                log.error("Response headers: {}", response.getHeaders());
+                log.error("Response body: {}", response.getBody());
+                log.error("Failed to send message to WhatsApp API");
+            } else {
+                log.info("Message sent successfully");
+            }
+        } catch (Exception e) {
+            log.error("Exception occurred while sending message to WhatsApp API", e);
         }
     }
 
