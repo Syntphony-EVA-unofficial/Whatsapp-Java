@@ -76,8 +76,11 @@ private boolean isValidURL(String url) {
 
         String audioURL = getAudioURL(audioID, metaToken);
         if (audioSTTEnabled) {
+            
+            
             if ((audioSTTServer!=null)&& (isValidURL(audioURL)))
             {
+                log.info("calling STT Server: {}", audioSTTServer);	
                 String Transcription = callSTTServer(audioURL, metaToken, audioSTTServer);
                 if (Transcription != null && !Transcription.isEmpty()) {
                     return new EVARequestTuple(Transcription, null);

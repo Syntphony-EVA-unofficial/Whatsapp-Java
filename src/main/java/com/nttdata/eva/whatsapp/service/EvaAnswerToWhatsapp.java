@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.messages.DocumentMessage;
 import com.nttdata.eva.whatsapp.messages.FlowMessage;
 import com.nttdata.eva.whatsapp.messages.ImageMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveListMessage;
@@ -45,7 +46,8 @@ public class EvaAnswerToWhatsapp {
         for (ResponseModel.Answer answer : evaResponse.getAnswers()) 
             {
             ObjectNode message = prepareMessages(answer, from);
-            messages.add(message);
+            if (message != null)
+                messages.add(message);
             }
         return messages;
 
@@ -72,6 +74,7 @@ public class EvaAnswerToWhatsapp {
             } else {
                 data = TextMessage.create(data, answer);
             }
+            return data;
         } else {
             boolean modelFound = false;
 
@@ -102,17 +105,20 @@ public class EvaAnswerToWhatsapp {
             } else if (FlowMessage.validate(answer)) {
                 data = FlowMessage.create(data, answer);
                 modelFound = true;
+            } else if (DocumentMessage.validate(answer)) {
+                data = DocumentMessage.create(data, answer);
+                modelFound = true;
             }
+
 
     
             if (modelFound) {
-                //System.out.println(data.toString());
+                return data;
             } else {
                 log.error("No valid message model found.");
+                return null;
             }
         }
-
-        return data;
     }
 
     public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, String facebookPhoneId, BrokerConfiguration brokerConfig) {
