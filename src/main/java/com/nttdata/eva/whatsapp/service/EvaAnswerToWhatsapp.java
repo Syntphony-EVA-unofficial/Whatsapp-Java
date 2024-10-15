@@ -19,7 +19,6 @@ import com.nttdata.eva.whatsapp.messages.TextMessage;
 import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.messages.LocationMessage;
 import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
-import com.nttdata.eva.whatsapp.messages.TemplateMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import java.util.ArrayList;
@@ -92,10 +91,7 @@ public class EvaAnswerToWhatsapp {
                 modelFound = true;
             } else if (VideoMessage.validate(answer)) {
                 data = VideoMessage.create(data, answer);
-                modelFound = true;
-            } else if (TemplateMessage.validate(answer)) {
-                data = TemplateMessage.create(data, answer);
-                modelFound = true;
+                modelFound = true;            
             } else if (LocationRequestMessage.validate(answer)) {
                 data = LocationRequestMessage.create(data, answer);
                 modelFound = true;

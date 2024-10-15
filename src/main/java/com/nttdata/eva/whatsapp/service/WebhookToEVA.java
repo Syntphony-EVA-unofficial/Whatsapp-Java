@@ -7,6 +7,7 @@ import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.EVARequestTuple;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.model.WebhookData;
+import com.nttdata.eva.whatsapp.model.WebhookData.Message;
 import com.nttdata.eva.whatsapp.utils.WhatsappMediaUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -123,6 +124,10 @@ public class WebhookToEVA {
                     return handleInteractive(message);
                 case "audio":
                     return handleAudio(message, brokerConfig);
+                case "button":
+                    return handleButtonTemplate(message);
+                
+
                 default:
                     log.warn("Message type not supported: {}", type);
                     log.info("Message data: {}",
@@ -135,23 +140,23 @@ public class WebhookToEVA {
         }
     }
 
-    public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService session) {
+    private EVARequestTuple handleButtonTemplate(Message message) {
+            log.info("Handling button template message");
+            String EVA_content = " ";
+            ObjectNode evaContextNode = objectMapper.createObjectNode();
+            evaContextNode.put("templateClicked", true);
+    
+            return new EVARequestTuple(EVA_content, evaContextNode);
+    }
+
+    public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService session, String userRef, String displayPhone) {
         String instance = session.getBrokerConfig().getEvaConfig().getEnvironment().getInstance();
         String orgUUID = session.getBrokerConfig().getEvaConfig().getOrganization().getUuid();
         String envUUID = session.getBrokerConfig().getEvaConfig().getEnvironment().getUuid();
         String botUUID = session.getBrokerConfig().getEvaConfig().getBot().getUuid();
         String channelUUID = session.getBrokerConfig().getEvaConfig().getBot().getChanneluuid();
 
-        String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
-                instance, orgUUID, envUUID, botUUID, channelUUID).trim();
-        StringBuilder urlBuilder = new StringBuilder(baseUrl);
-        String sessionCode = session.getEvaSessionCode();
-        if (sessionCode != null) {
-            urlBuilder.append("/").append(sessionCode);
-            log.info("Session code is " + sessionCode);
-        } else {
-            log.info("Session code is null");
-        }
+        
 
         restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 
@@ -160,7 +165,8 @@ public class WebhookToEVA {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("API-KEY", apiKey);
         headers.set("OS", "Linux");
-        headers.set("USER-REF", session.getUserID());
+        headers.set("USER-REF", userRef);
+        headers.set("business-Key", displayPhone);
         headers.set("LOCALE", "en-US");
 
         Map<String, Object> data = new HashMap<>();
@@ -184,6 +190,17 @@ public class WebhookToEVA {
             }
 
             try {
+
+                String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
+                instance, orgUUID, envUUID, botUUID, channelUUID).trim();
+                StringBuilder urlBuilder = new StringBuilder(baseUrl);
+                String sessionCode = session.getEvaSessionCode();
+                if (sessionCode != null) {
+                    urlBuilder.append("/").append(sessionCode);
+                    log.info("Session code is " + sessionCode);
+                } else {
+                    log.info("Session code is null");
+                }
                 log.info("Sending message to EVA: {} at retry {}", data, retryCount);
                 HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(data, headers);
                 Map<String, Object> response = restTemplate.postForObject(urlBuilder.toString(), requestEntity,

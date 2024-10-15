@@ -24,4 +24,8 @@ public class UserSessionData implements Cloneable {
             throw new AssertionError(); // Should never happen
         }
     }
+
+    public void deleteSessionCode() {
+        this.evaSessionCode = null;
+    }
 }

@@ -34,15 +34,19 @@ public class WebhookService {
                 // Convert JsonNode to WebhookData object
                 // Extract the message
                 WebhookData.Message message = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMessages().get(0);
+                
                 log.info("Phone Number " + phoneId );
                 
                 // Convert WebhookData to EVA request
                 EVARequestTuple evaRequest = webhookToEVA.convert(webhookData, message, brokerConfig);
                 if (evaRequest != null) {
                     //Use to load values from cache and generate a new token if needed
+                    String displayPhone = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMetadata().getDisplay_phone_number();
                     String composedUserID = message.getFrom() + "-" + phoneId;
+                    String userRef = message.getFrom() ;
+
                     sessionService.InitCache(composedUserID, brokerConfig);
-                    ResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService);
+                    ResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService, userRef, displayPhone);
                     ArrayList<ObjectNode> whatsappAPICalls = evaAnswerToWhatsapp.getWhatsappAPICalls(evaResponse, message.getFrom());
                     evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, phoneId, brokerConfig);
                     //session.saveSession();
