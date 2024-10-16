@@ -1,4 +1,5 @@
 package com.nttdata.eva.whatsapp.messages;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
 
@@ -16,13 +17,7 @@ public class TextMessage {
         return data;
     }
 
-    public static boolean validate(Answer answer) {
-        if (answer.getContent() == null && !answer.getContent().trim().isEmpty()) 
-            return false;
-        else
-            return false;
-    }
-
+    
 }
 
 

@@ -15,6 +15,7 @@ import com.nttdata.eva.whatsapp.messages.FlowMessage;
 import com.nttdata.eva.whatsapp.messages.ImageMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveListMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveReplyButtonMessage;
+import com.nttdata.eva.whatsapp.messages.EVAButtonMessage;
 import com.nttdata.eva.whatsapp.messages.TextMessage;
 import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.messages.LocationMessage;
@@ -22,7 +23,6 @@ import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import java.util.ArrayList;
-import java.util.concurrent.Flow;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,21 +67,21 @@ public class EvaAnswerToWhatsapp {
         data.put("to", from);
 
         // Determine the message type
+        // The only messages that do not have a technical text are text messages and buttons
         if (answer.getTechnicalText() == null) {
-            if (InteractiveReplyButtonMessage.validate(answer)) {
-                data = InteractiveReplyButtonMessage.create(data, answer);
+            if (EVAButtonMessage.validate(answer)) {
+                data = EVAButtonMessage.create(data, answer);
             } else {
+                //since eva cannot send empty answers, at this point we at least have a text message.
                 data = TextMessage.create(data, answer);
             }
             return data;
+        //rest of the message types require a technical text
         } else {
             boolean modelFound = false;
 
             if (InteractiveReplyButtonMessage.validate(answer)) {
                 data = InteractiveReplyButtonMessage.create(data, answer);
-                modelFound = true;
-            } else if (TextMessage.validate(answer)) {
-                data = TextMessage.create(data, answer);
                 modelFound = true;
             } else if (InteractiveListMessage.validate(answer)) {
                 data = InteractiveListMessage.create(data, answer);
