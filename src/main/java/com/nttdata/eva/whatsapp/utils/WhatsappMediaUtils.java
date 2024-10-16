@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.EVARequestTuple;
+import com.nttdata.eva.whatsapp.model.TranscribeResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,22 +69,30 @@ private boolean isValidURL(String url) {
         }
     }
 
-    public EVARequestTuple getSTTFromAudio(String audioID, BrokerConfiguration brokerConfig)
+    public EVARequestTuple getAudioIDorSTT(String audioID, BrokerConfiguration brokerConfig)
     {
         String audioSTTServer = brokerConfig.getSTTConfig().getUrl();
         Boolean audioSTTEnabled = brokerConfig.getSTTConfig().getEnabled();
         String metaToken = brokerConfig.getMetaConfig().getAccessToken();
 
         String audioURL = getAudioURL(audioID, metaToken);
+        log.info("Audio URL: {}", audioURL);
+        log.info("Audio STT Enabled: {}", audioSTTEnabled);
+        log.info("Audio STT Server: {}", audioSTTServer);
+
+
         if (audioSTTEnabled) {
             
-            
-            if ((audioSTTServer!=null)&& (isValidURL(audioURL)))
-            {
-                log.info("calling STT Server: {}", audioSTTServer);	
-                String Transcription = callSTTServer(audioURL, metaToken, audioSTTServer);
-                if (Transcription != null && !Transcription.isEmpty()) {
-                    return new EVARequestTuple(Transcription, null);
+            if (audioSTTServer != null) {
+                log.info("audioSTTServer is not null");
+                if (isValidURL(audioURL)) {
+                    log.info("audioURL is valid");            
+                    log.info("calling STT Server: {}", audioSTTServer);	
+                    TranscribeResponse Transcription = callSTTServer(audioURL, metaToken, audioSTTServer);
+                    if (Transcription != null && Transcription.isSuccess() && Transcription.getMessage() != null) {
+                        
+                        return new EVARequestTuple(Transcription.getMessage(), null);
+                    }
                 }
             }
         }
@@ -95,14 +104,14 @@ private boolean isValidURL(String url) {
 
 
 
-     private String callSTTServer(String audioURL, String metaToken, String audioSTTServer) {
+     private TranscribeResponse callSTTServer(String audioURL, String metaToken, String audioSTTServer) {
         
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
 
         
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("url", audioURL);
+        payload.put("mediaURL", audioURL);
         payload.put("token", metaToken);
 
         String requestBody;
@@ -115,20 +124,19 @@ private boolean isValidURL(String url) {
 
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
 
-
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(audioSTTServer, HttpMethod.POST, requestEntity, String.class);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return response.getBody();
-            } else {
-                log.error("Failed to get STT response: " + response.getStatusCode());
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(audioSTTServer, HttpMethod.POST, requestEntity, String.class);
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    log.info("STT response received successfully");
+                    return objectMapper.readValue(response.getBody(), TranscribeResponse.class);
+                } else {
+                    log.error("Failed to get STT response: " + response.getStatusCode());
+                    return null;
+                }
+            } catch (Exception e) {
+                log.error("Exception occurred while getting STT response", e);
                 return null;
             }
-        } 
-        catch (RestClientException e) {
-            log.error("Error during REST call to STT server", e);
-            return null;
-        }
     }
         
 }

@@ -87,7 +87,9 @@ public class ConfigLoader {
 
         BrokerConfiguration.STT STTConfig = new BrokerConfiguration.STT();
         STTConfig.setUrl(properties.getProperty("google.stt.url"));
-        STTConfig.setEnabled(Boolean.parseBoolean(properties.getProperty("google.stt.enabled")));
+        String stringEnable = properties.getProperty("google.stt.enabled");
+        boolean booleanEnabled = stringEnable != null && Boolean.parseBoolean(stringEnable);
+        STTConfig.setEnabled(booleanEnabled);
 
         String supportedLanguages = properties.getProperty("google.stt.supportedlanguages");
         if (supportedLanguages != null) {

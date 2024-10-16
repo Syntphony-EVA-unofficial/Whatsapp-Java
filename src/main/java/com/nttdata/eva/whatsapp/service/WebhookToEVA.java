@@ -90,8 +90,8 @@ public class WebhookToEVA {
         try {
             Map<String, Object> AudioMap = message.getAudio();
             String audioID = (String) AudioMap.get("id");
-            EVARequestTuple STTResult = whatsappMediaUtils.getSTTFromAudio(audioID, brokerConfig);
-            return STTResult;
+            EVARequestTuple audioResult = whatsappMediaUtils.getAudioIDorSTT(audioID, brokerConfig);
+            return audioResult;
 
         } catch (Exception e) {
             log.warn("Audio message could not be processed", e);
