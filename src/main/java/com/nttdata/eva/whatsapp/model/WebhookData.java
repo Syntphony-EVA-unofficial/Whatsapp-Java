@@ -36,12 +36,20 @@ public class WebhookData {
 
         private Map<String, Object> interactive;
         private Map<String, Object> text;
-        private Map<String, Object> image;
+        private ImageData image;
         private Map<String, Object> audio;
         private Map<String, Object> document;
         private Location location;
         private Map<String, Object> context;
     
+    }
+
+    @Data
+    public class ImageData {
+    private String caption;
+    private String sha256;
+    private String id;
+    private String mime_type;
     }
 
     @Data
