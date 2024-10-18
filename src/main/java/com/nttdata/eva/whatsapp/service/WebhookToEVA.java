@@ -79,6 +79,12 @@ public class WebhookToEVA {
                 log.error("list_reply is not a Map");
                 return null;
             }
+        } else if ("nfm_reply".equals(subtype)) {
+            log.info("Handling interactive flow message");
+            log.info(interactiveMap.toString());
+            String EVA_content = " ";
+            ObjectNode EVA_context = null;
+            return new EVARequestTuple(EVA_content, EVA_context);
         } else {
             log.warn("Interactive message subtype not supported: {}", subtype);
             return null;
