@@ -1,5 +1,6 @@
 package com.nttdata.eva.whatsapp.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -81,9 +82,23 @@ public class WebhookToEVA {
             }
         } else if ("nfm_reply".equals(subtype)) {
             log.info("Handling interactive flow message");
-            log.info(interactiveMap.toString());
+            try {
+                objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
+            } catch (JsonProcessingException e) {
+                log.error("Error printing message", e);
+            }
+
             String EVA_content = " ";
-            ObjectNode EVA_context = null;
+
+            // Parse the nfm_reply message
+            JsonNode nfmReplyNode = objectMapper.convertValue(interactiveMap.get("nfm_reply"), JsonNode.class);
+
+            // Extract the response_json object
+            JsonNode responseJsonNode = nfmReplyNode.path("response_json");
+            ObjectNode EVA_context = objectMapper.createObjectNode();
+            EVA_context.set("response_json", responseJsonNode);
+            
+        
             return new EVARequestTuple(EVA_content, EVA_context);
         } else {
             log.warn("Interactive message subtype not supported: {}", subtype);
