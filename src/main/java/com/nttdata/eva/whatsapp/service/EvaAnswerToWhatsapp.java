@@ -20,6 +20,9 @@ import com.nttdata.eva.whatsapp.messages.TextMessage;
 import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.messages.LocationMessage;
 import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
+import com.nttdata.eva.whatsapp.messages.ProductMessage;
+import com.nttdata.eva.whatsapp.messages.CatalogMessage;
+
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import java.util.ArrayList;
@@ -104,6 +107,15 @@ public class EvaAnswerToWhatsapp {
             } else if (DocumentMessage.validate(answer)) {
                 data = DocumentMessage.create(data, answer);
                 modelFound = true;
+            } else if (ProductMessage.validate(answer)) {
+                data = ProductMessage.create(data, answer);
+                modelFound = true;
+            } else if (CatalogMessage.validate(answer)) {
+                data = CatalogMessage.create(data, answer);
+                modelFound = true;
+            }
+            else {
+                log.error("No valid message model found.");
             }
 
 

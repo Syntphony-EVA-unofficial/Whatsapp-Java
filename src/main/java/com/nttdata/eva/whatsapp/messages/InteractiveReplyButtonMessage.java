@@ -2,7 +2,6 @@ package com.nttdata.eva.whatsapp.messages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.messages.ImageMessage.ImageModel;
 import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
 
 import lombok.AllArgsConstructor;
@@ -44,12 +43,12 @@ public class InteractiveReplyButtonMessage  {
                 return true;
             } else {
                 for (ConstraintViolation<InteractiveReplyButtonModel> violation : violations) {
-                    log.info("Validation error: {}", violation.getMessage());
+                    log.debug("Constrain Validation error: {}", violation.getMessage());
                 }
                 return false;
             }
         } catch (Exception e) {
-            log.info("Validation error: {}", e.getMessage());
+            log.debug("Exception Validation error: {}", e.getMessage());
             return false;
         }
     }
