@@ -9,6 +9,7 @@ import com.nttdata.eva.whatsapp.model.EVARequestTuple;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.model.WebhookData;
 import com.nttdata.eva.whatsapp.model.WebhookData.Message;
+import com.nttdata.eva.whatsapp.model.WebhookData.Status;
 import com.nttdata.eva.whatsapp.utils.WhatsappMediaUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,11 +43,19 @@ public class WebhookToEVA {
     private RestTemplate restTemplate;
 
     public EVARequestTuple handleText(WebhookData.Message message) {
+       
         log.info("Handling text message");
         Map<String, Object> textMap = message.getText();
         String EVA_content = (String) textMap.get("body");
+    
+        if (message.getContext() != null) {
+            ObjectNode EVA_context = objectMapper.convertValue(message.getContext(), ObjectNode.class);
+            return new EVARequestTuple(EVA_content, EVA_context);
+        }
+
         ObjectNode EVA_context = null;
         return new EVARequestTuple(EVA_content, EVA_context);
+    
     }
 
     public EVARequestTuple handleInteractive(WebhookData.Message message) {
@@ -136,29 +145,66 @@ public class WebhookToEVA {
     public EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message, BrokerConfiguration brokerConfig) {
         try {
             String type = message.getType();
-            switch (type) {
-                case "text":
-                    return handleText(message);
-                case "location":
-                    return handleLocation(message);
-                case "interactive":
-                    return handleInteractive(message);
-                case "audio":
-                    return handleAudio(message, brokerConfig);
-                case "button":
-                    return handleButtonTemplate(message);
-                case "image":
-                    return handleImage(message, brokerConfig);	
-                default:
-                    log.warn("Message type not supported: {}", type);
-                    log.info("Message data: {}",
-                            objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message));
-                    return null;
+            if (type != null) {
+                switch (type) {
+                    case "text":
+                        return handleText(message);
+                    case "location":
+                        return handleLocation(message);
+                    case "interactive":
+                        return handleInteractive(message);
+                    case "audio":
+                        return handleAudio(message, brokerConfig);
+                    case "button":
+                        return handleButtonTemplate(message);
+                    case "image":
+                        return handleImage(message, brokerConfig);
+                    case "order":
+                        return handleOrder(message);
+                    default:
+                        log.warn("Message type not supported: {}", type);
+                        log.info("Message data: {}",
+                                objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message));
+                        return null;
+                }
+            } else {
+                // Check for statuses in the value object
+                for (WebhookData.Entry entry : webhookData.getEntry()) {
+                    for (WebhookData.Change change : entry.getChanges()) {
+                        if (change.getValue().getStatuses() != null && !change.getValue().getStatuses().isEmpty()) {
+                            return handleStatus(change.getValue().getStatuses().get(0));
+                        }
+                    }
+                }
+                log.warn("Message type not supported and no statuses found");
+                log.info("Message data: {}",
+                        objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(message));
+                return null;
             }
         } catch (Exception e) {
             log.error("Error in convert to EVA occurred", e);
             return null;
         }
+    }
+
+    private EVARequestTuple handleStatus(Status status) {
+        log.info("Handling status message");
+        String EVA_content = " ";
+        ObjectNode evaContextNode = objectMapper.createObjectNode();
+        ObjectNode statusNode = objectMapper.convertValue(status, ObjectNode.class);
+        evaContextNode.set("status", statusNode);
+        return new EVARequestTuple(EVA_content, evaContextNode);
+    
+    }
+
+    private EVARequestTuple handleOrder(Message message) {
+        log.info("Handling order message");
+        String EVA_content = " ";
+        // Convert the order object to an ObjectNode
+        ObjectNode EVA_context = objectMapper.convertValue(message.getOrder(), ObjectNode.class);
+        // Add a flag to indicate this is an order
+        EVA_context.put("order", true);
+        return new EVARequestTuple(EVA_content, EVA_context);
     }
 
     private EVARequestTuple handleImage(Message message,  BrokerConfiguration brokerConfig) {

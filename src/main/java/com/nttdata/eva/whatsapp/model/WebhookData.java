@@ -40,8 +40,36 @@ public class WebhookData {
         private Map<String, Object> audio;
         private Map<String, Object> document;
         private Location location;
-        private Map<String, Object> context;
-    
+        private Context context; 
+        private Order order; 
+
+
+        @Data
+        public static class Context {
+            private String from;
+            private String id;
+            private ReferredProduct referred_product;
+
+            @Data
+            public static class ReferredProduct {
+                private String catalog_id;
+                private String product_retailer_id;
+            }
+        }
+        @Data
+        public static class Order {
+            private String catalog_id;
+            private String text;
+            private List<ProductItem> product_items;
+
+            @Data
+            public static class ProductItem {
+                private String product_retailer_id;
+                private int quantity;
+                private double item_price;
+                private String currency;
+            }
+        }
     }
 
     @Data
@@ -52,12 +80,14 @@ public class WebhookData {
     private String mime_type;
     }
 
+
     @Data
     public static class Value {
         private String messaging_product;
         private Metadata metadata;
         private List<Contact> contacts;
         private List<Message> messages;
+        private List<Status> statuses;
     }
 
     @Data
@@ -75,6 +105,35 @@ public class WebhookData {
     @Data
     public static class Profile {
         private String name;
+    }
+
+    @Data
+    public static class Status {
+        private String id;
+        private String recipient_id;
+        private String status;
+        private String timestamp;
+        private Conversation conversation;
+        private Pricing pricing;
+    }
+
+    @Data
+    public static class Conversation {
+        private String id;
+        private String expiration_timestamp;
+        private Origin origin;
+    }
+
+    @Data
+    public static class Origin {
+        private String type;
+    }
+
+    @Data
+    public static class Pricing {
+        private String pricing_model;
+        private boolean billable;
+        private String category;
     }
 }
 
@@ -299,6 +358,8 @@ public class WebhookData {
 // }
 // endregion
 
+
+//https://developers.facebook.com/docs/whatsapp/cloud-api/guides/sell-products-and-services/receive-responses
 // region Sample payload Interactive List Reply
 // {
 //     "object": "whatsapp_business_account",
@@ -369,3 +430,154 @@ public class WebhookData {
 //     }
 // }
 //endregion
+
+
+//region Sample payload Place order
+// {
+//     "object": "whatsapp_business_account",
+//     "entry": [
+//       {
+//         "id": "<WHATSAPP_BUSINESS_ACCOUNT_ID>",
+//         "changes": [
+//           {
+//             "value": {
+//               "messaging_product": "whatsapp",
+//               "metadata": {
+//                 "display_phone_number": "<BUSINESS_DISPLAY_PHONE_NUMBER>",
+//                 "phone_number_id": "<BUSINESS_PHONE_NUMBER_ID>"
+//               },
+//               "contacts": [
+//                 {
+//                   "profile": {
+//                     "name": "<WHATSAPP_USER_NAME>"
+//                   },
+//                   "wa_id": "<WHATSAPP_USER_ID>"
+//                 }
+//               ],
+//               "messages": [
+//                 {
+//                   "from": "<WHATSAPP_USER_PHONE_NUMBER>",
+//                   "id": "<WHATSAPP_MESSAGE_ID>",
+//                   "timestamp": "<WEBHOOK_TIMESTAMP>",
+//                   "type": "order",
+//                   "order": {
+//                     "catalog_id": "<CATALOG_ID>",
+//                     "text": "<MESSAGE_TEXT>",
+//                     "product_items": [
+//                       {
+//                         "product_retailer_id": "<PRODUCT_ID>",
+//                         "quantity": <PRODUCT_QUANTITY>,
+//                         "item_price": <PRODUCT_PRICE>,
+//                         "currency": "<PRODUCT_CURRENCY>"
+//                       }
+  
+//                      /* Additional items would follow, if order contains multiple items */
+  
+//                     ]
+//                   }
+//                 }
+//               ]
+//             },
+//             "field": "messages"
+//           }
+//         ]
+//       }
+//     ]
+//   }
+//endregion
+
+//region Sample payload Text message Inquire Product
+// {
+//     "object": "whatsapp_business_account",
+//     "entry": [
+//       {
+//         "id": "<WHATSAPP_BUSINESS_ACCOUNT_ID>",
+//         "changes": [
+//           {
+//             "value": {
+//               "messaging_product": "whatsapp",
+//               "metadata": {
+//                 "display_phone_number": "<BUSINESS_DISPLAY_PHONE_NUMBER>",
+//                 "phone_number_id": "<BUSINESS_PHONE_NUMBER_ID>"
+//               },
+//               "contacts": [
+//                 {
+//                   "profile": {
+//                     "name": "<WHATSAPP_USER_NAME>"
+//                   },
+//                   "wa_id": "<WHATSAPP_USER_ID>"
+//                 }
+//               ],
+//               "messages": [
+//                 {
+  
+//                   /* The `context` property is only included if the user tapped a button
+//                      on the product details page to send you the message */
+//                   "context": {
+//                     "from": "<BUSINESS_DISPLAY_PHONE_NUMBER>",
+//                     "id": "<CONTEXT_ID>",
+//                     "referred_product": {
+//                       "catalog_id": "<CATALOG_ID>",
+//                       "product_retailer_id": "<PRODUCT_ID>"
+//                     }
+//                   },
+  
+//                   "from": "<WHATSAPP_USER_PHONE_NUMBER>",
+//                   "id": "<WHATSAPP_MESSAGE_ID>",
+//                   "timestamp": "<WEBHOOK_TIMESTAMP>",
+//                   "text": {
+//                     "body": "<MESSAGE_TEXT>"
+//                   },
+//                   "type": "text"
+//                 }
+//               ]
+//             },
+//             "field": "messages"
+//           }
+//         ]
+//       }
+//     ]
+//   }
+//endregion
+
+//region Sample payload Message status
+// {
+//     "object": "whatsapp_business_account",
+//     "entry": [
+//       {
+//         "id": "<WHATSAPP_BUSINESS_ACCOUNT_ID>",
+//         "changes": [
+//           {
+//             "value": {
+//               "messaging_product": "whatsapp",
+//               "metadata": {
+//                 "display_phone_number": "<BUSINESS_DISPLAY_PHONE_NUMBER>",
+//                 "phone_number_id": "<BUSINESS_PHONE_NUMBER_ID>"
+//               },
+//               "statuses": [
+//                 {
+//                   "id": "<WHATSAPP_MESSAGE_ID>",
+//                   "recipient_id": "<WHATSAPP_USER_ID>",
+//                   "status": "<MESSAGE_STATUS>",
+//                   "timestamp": "<WEBHOOK_TIMESTAMP>",
+//                   "conversation": {
+//                     "id": "<CONVERSATION_ID>",
+//                     "expiration_timestamp": "<CONVERSATION_EXPIRATION_TIMESTAMP>",
+//                     "origin": {
+//                       "type": "<CONVERSATION_ORIGIN>"
+//                     }
+//                   },
+//                   "pricing": {
+//                     "pricing_model": "CBP",
+//                     "billable": <IS_BILLABLE>,
+//                     "category": "<CONVERSATION_CATEGORY>"
+//                   }
+//                 }
+//               ]
+//             },
+//             "field": "messages"
+//           }
+//         ]
+//       }
+//     ]
+//   }
