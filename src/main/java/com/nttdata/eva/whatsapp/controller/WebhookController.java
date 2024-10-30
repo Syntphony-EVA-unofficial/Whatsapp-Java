@@ -13,6 +13,7 @@ import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.WebhookData;
 import com.nttdata.eva.whatsapp.service.WebhookService;
 import com.nttdata.eva.whatsapp.utils.ConfigLoader;
+import com.nttdata.eva.whatsapp.utils.MessageLogger;
 import com.nttdata.eva.whatsapp.utils.WebhookUtils;
 
 import java.util.Map;
@@ -39,6 +40,9 @@ public class WebhookController {
     @Autowired
     private ConfigLoader configLoader;
 
+    @Autowired
+    private MessageLogger messageLogger;
+
 
     @GetMapping("/webhook")
     public ResponseEntity<String> verifyWebhook(HttpServletRequest request){
@@ -61,19 +65,22 @@ public class WebhookController {
                 // Convert JsonNode to WebhookData object
                 webhookData = objectMapper.treeToValue(data, WebhookData.class);
                 log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
-
+                
+                
                 phoneId = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMetadata().getPhone_number_id();
                 Map<String, BrokerConfiguration> allBrokerConfigs = configLoader.getBrokerConfigs();
-
+                
                 if (allBrokerConfigs.containsKey(phoneId)) {
-                    brokerConfig = allBrokerConfigs.get(phoneId);
                     // Process the brokerConfig as needed
+                    brokerConfig = allBrokerConfigs.get(phoneId);
+                    
+                    messageLogger.recordWebhookIncomming(data, brokerConfig);
                 } else {
-
+                    
                     log.error("Phone ID {} does not exist in the map", phoneId);
                     // Get the set of keys
                     Set<String> keys = allBrokerConfigs.keySet();
-
+                    
                     // Print all keys
                     for (String key : keys) {
                         System.out.println(key);

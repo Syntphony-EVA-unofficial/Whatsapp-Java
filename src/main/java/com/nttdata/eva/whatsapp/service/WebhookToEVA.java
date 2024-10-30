@@ -231,7 +231,11 @@ public class WebhookToEVA {
 
     private EVARequestTuple handleButtonTemplate(Message message) {
             log.info("Handling button template message");
+
             String EVA_content = " ";
+            if (message.getButton() != null && message.getButton().getText() != null) {
+                EVA_content = message.getButton().getText();
+            }
             ObjectNode evaContextNode = objectMapper.createObjectNode();
             evaContextNode.put("templateClicked", true);
     
@@ -255,7 +259,7 @@ public class WebhookToEVA {
         headers.set("API-KEY", apiKey);
         headers.set("OS", "Linux");
         headers.set("USER-REF", userRef);
-        headers.set("business-Key", displayPhone);
+        headers.set("business-Key", userRef);
         headers.set("LOCALE", "en-US");
 
         Map<String, Object> data = new HashMap<>();

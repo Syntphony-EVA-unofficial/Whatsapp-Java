@@ -25,6 +25,8 @@ import com.nttdata.eva.whatsapp.messages.CatalogMessage;
 
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
+import com.nttdata.eva.whatsapp.utils.MessageLogger;
+
 import java.util.ArrayList;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +39,11 @@ public class EvaAnswerToWhatsapp {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private MessageLogger messageLogger;
+    
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
 
 
 
@@ -133,6 +139,7 @@ public class EvaAnswerToWhatsapp {
         String facebookAccessToken = brokerConfig.getMetaConfig().getAccessToken();
         for (ObjectNode bodyAPIcall : whatsappAPICalls) {
             sendToWhatsappAPI(bodyAPIcall, facebookPhoneId, facebookAccessToken);
+            messageLogger.recordAPIMessageOutgoing(bodyAPIcall, brokerConfig);
             try {
                 Thread.sleep(1500); // Wait for 1500 milliseconds
             } catch (InterruptedException e) {
@@ -153,6 +160,8 @@ public class EvaAnswerToWhatsapp {
 
 
         HttpEntity<ObjectNode> request = new HttpEntity<>(bodyAPIcall, headers);
+
+
 
         String url = String.format("https://graph.facebook.com/v21.0/%s/messages", facebookPhoneId);
 

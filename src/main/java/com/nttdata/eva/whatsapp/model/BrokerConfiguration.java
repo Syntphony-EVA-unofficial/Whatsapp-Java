@@ -9,6 +9,15 @@ public class BrokerConfiguration {
     private Meta metaConfig;
     private EVA evaConfig;
     private STT STTConfig;
+    private MessageLoger messageLogerConfig;
+
+
+    @Data
+    public static class MessageLoger
+    {
+        private String url;
+        private Boolean enabled;
+    }
 
     @Data
     public static class STT

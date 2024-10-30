@@ -42,7 +42,13 @@ public class WebhookData {
         private Location location;
         private Context context; 
         private Order order; 
+        private Button button; // Added Button structure
 
+        @Data
+        public static class Button {
+            private String payload;
+            private String text;
+        }
 
         @Data
         public static class Context {

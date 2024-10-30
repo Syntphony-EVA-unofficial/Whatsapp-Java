@@ -84,12 +84,20 @@ public class ConfigLoader {
         evaConfig.setEnvironment(envConfig);
         evaConfig.setBot(botConfig);
 
+        BrokerConfiguration.MessageLoger messageLogerConfig = new BrokerConfiguration.MessageLoger();
+        messageLogerConfig.setUrl(properties.getProperty("messagelogger.url", "0.0.0.0"));
+        String MessageLogerstringEnable = properties.getProperty("messagelogger.enabled", "false");
+        boolean MessageLogerbooleanEnabled = MessageLogerstringEnable != null && Boolean.parseBoolean(MessageLogerstringEnable);
+        messageLogerConfig.setEnabled(MessageLogerbooleanEnabled);
+
+
+        
 
         BrokerConfiguration.STT STTConfig = new BrokerConfiguration.STT();
-        STTConfig.setUrl(properties.getProperty("google.stt.url"));
-        String stringEnable = properties.getProperty("google.stt.enabled");
-        boolean booleanEnabled = stringEnable != null && Boolean.parseBoolean(stringEnable);
-        STTConfig.setEnabled(booleanEnabled);
+        STTConfig.setUrl(properties.getProperty("google.stt.url", "0.0.0.0"));
+        String STTstringEnable = properties.getProperty("google.stt.enabled", "false");
+        boolean STTbooleanEnabled = STTstringEnable != null && Boolean.parseBoolean(STTstringEnable);
+        STTConfig.setEnabled(STTbooleanEnabled);
 
         String supportedLanguages = properties.getProperty("google.stt.supportedlanguages");
         if (supportedLanguages != null) {
@@ -100,6 +108,7 @@ public class ConfigLoader {
         brokerConfigs.setMetaConfig(metaConfig);
         brokerConfigs.setEvaConfig(evaConfig);
         brokerConfigs.setSTTConfig(STTConfig);
+        brokerConfigs.setMessageLogerConfig(messageLogerConfig);
 
         return brokerConfigs;
     }
