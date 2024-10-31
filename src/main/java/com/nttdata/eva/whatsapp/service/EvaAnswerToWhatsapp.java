@@ -139,7 +139,7 @@ public class EvaAnswerToWhatsapp {
         String facebookAccessToken = brokerConfig.getMetaConfig().getAccessToken();
         for (ObjectNode bodyAPIcall : whatsappAPICalls) {
             sendToWhatsappAPI(bodyAPIcall, facebookPhoneId, facebookAccessToken);
-            messageLogger.recordAPIMessageOutgoing(bodyAPIcall, brokerConfig);
+            messageLogger.recordAPIMessageOutgoing(bodyAPIcall, facebookPhoneId,brokerConfig);
             try {
                 Thread.sleep(1500); // Wait for 1500 milliseconds
             } catch (InterruptedException e) {
