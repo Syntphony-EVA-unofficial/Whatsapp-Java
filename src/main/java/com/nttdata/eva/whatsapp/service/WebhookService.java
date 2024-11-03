@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class WebhookService {
     @Value("${webhook.verificationtoken}")
     private String verificationToken;
 
-    public void processIncomingMessage(WebhookData webhookData, HttpServletRequest request, BrokerConfiguration brokerConfig, String phoneId) {
+    public void processIncomingMessage(WebhookData webhookData, HttpServletRequest request, BrokerConfiguration brokerConfig, String phoneId, JsonNode incommingData ) {
             try {
                 // Convert JsonNode to WebhookData object
                 // Extract the message
@@ -47,8 +48,9 @@ public class WebhookService {
 
                     sessionService.InitCache(composedUserID, brokerConfig);
                     ResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService, userRef, displayPhone);
-                    ArrayList<ObjectNode> whatsappAPICalls = evaAnswerToWhatsapp.getWhatsappAPICalls(evaResponse, message.getFrom());
-                    evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, phoneId, brokerConfig);
+                    String clientPhone = message.getFrom();
+                    ArrayList<ObjectNode> whatsappAPICalls = evaAnswerToWhatsapp.getWhatsappAPICalls(evaResponse, clientPhone);
+                    evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, phoneId, brokerConfig, incommingData, clientPhone);
                     //session.saveSession();
                 } else {
                     log.warn("Data to send to EVA is empty");

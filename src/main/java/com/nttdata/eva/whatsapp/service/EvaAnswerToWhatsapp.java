@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nttdata.eva.whatsapp.messages.DocumentMessage;
@@ -134,12 +135,24 @@ public class EvaAnswerToWhatsapp {
             }
         }
     }
-
-    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, String facebookPhoneId, BrokerConfiguration brokerConfig) {
+    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, 
+    String facebookPhoneId, 
+    BrokerConfiguration brokerConfig, 
+    JsonNode incommingData,
+    String clientPhone) 
+    {
         String facebookAccessToken = brokerConfig.getMetaConfig().getAccessToken();
+    
+        // Accumulate outgoing messages for bulk sending
+        ArrayList<ObjectNode> outgoingMessagesList = new ArrayList<>();
+    
         for (ObjectNode bodyAPIcall : whatsappAPICalls) {
+            // Send each message to the WhatsApp API
             sendToWhatsappAPI(bodyAPIcall, facebookPhoneId, facebookAccessToken);
-            messageLogger.recordAPIMessageOutgoing(bodyAPIcall, facebookPhoneId,brokerConfig);
+    
+            // Collect outgoing messages for bulk logging
+            outgoingMessagesList.add(bodyAPIcall);
+    
             try {
                 Thread.sleep(1500); // Wait for 1500 milliseconds
             } catch (InterruptedException e) {
@@ -147,7 +160,14 @@ public class EvaAnswerToWhatsapp {
                 log.error("Thread was interrupted", e);
             }
         }
+    
+        // Send all outgoing messages in one bulk operation
+        if (!outgoingMessagesList.isEmpty()) {
+            ObjectNode[] outgoingMessagesArray = outgoingMessagesList.toArray(new ObjectNode[0]);
+            messageLogger.sendBulkMessage(incommingData, outgoingMessagesArray, facebookPhoneId, brokerConfig, clientPhone);
+        }
     }
+    
 
     public void sendToWhatsappAPI(ObjectNode bodyAPIcall, String facebookPhoneId, String facebookAccessToken) {
         log.info("Sending message to WhatsApp API");

@@ -40,8 +40,6 @@ public class WebhookController {
     @Autowired
     private ConfigLoader configLoader;
 
-    @Autowired
-    private MessageLogger messageLogger;
 
 
     @GetMapping("/webhook")
@@ -57,14 +55,15 @@ public class WebhookController {
         WebhookData webhookData;
         BrokerConfiguration brokerConfig;
         String phoneId;
+        JsonNode incommingData;
         try {
             // Parse the request body into a JsonNode
-            JsonNode data = objectMapper.readTree(requestBody);
+            incommingData = objectMapper.readTree(requestBody);
 
             try {
                 // Convert JsonNode to WebhookData object
-                webhookData = objectMapper.treeToValue(data, WebhookData.class);
-                log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data));
+                webhookData = objectMapper.treeToValue(incommingData, WebhookData.class);
+                log.debug("Webhook incoming data: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(incommingData));
                 
                 
                 phoneId = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMetadata().getPhone_number_id();
@@ -74,7 +73,7 @@ public class WebhookController {
                     // Process the brokerConfig as needed
                     brokerConfig = allBrokerConfigs.get(phoneId);
                     
-                    messageLogger.recordWebhookIncomming(data, brokerConfig);
+                    
                 } else {
                     
                     log.error("Phone ID {} does not exist in the map", phoneId);
@@ -91,11 +90,11 @@ public class WebhookController {
                 
             } catch (JsonProcessingException e) {
                 try {
-                    String status = data.get("entry").get(0).get("changes").get(0).get("value").get("statuses").get(0).get("status").asText();
+                    String status = incommingData.get("entry").get(0).get("changes").get(0).get("value").get("statuses").get(0).get("status").asText();
                     log.info("Message status: {}", status);
                     return ResponseEntity.ok("Request processed successfully.");
                 } catch (Exception ex) {
-                    log.warn("Received unexpected data: {}", data);
+                    log.warn("Received unexpected data: {}", incommingData);
                     return ResponseEntity.status(400).body("Invalid request body: Unable to parse JSON.");
                 }
             }
@@ -108,7 +107,8 @@ public class WebhookController {
         // Validate the signature
         if (webhookUtils.checkSignature(request, requestBody, appSecret)) {
             // Process the incoming message
-            webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId);
+            webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, incommingData);
+
             return ResponseEntity.ok("Request processed successfully.");
         } else {
             return ResponseEntity.ok("Invalid signature.");
