@@ -2,6 +2,7 @@ package com.nttdata.eva.whatsapp.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 
@@ -19,9 +20,6 @@ import org.springframework.web.client.RestTemplate;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-
-
-
 @Slf4j
 @Service
 public class MessageLogger {
@@ -30,6 +28,8 @@ public class MessageLogger {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    // Class-level variable to store the incoming message temporarily
 
     private boolean isValidURL(String url) {
         try {
@@ -40,8 +40,8 @@ public class MessageLogger {
             return false;
         }
     }
-    
-    private void logMessage(ObjectNode payload, String sender, BrokerConfiguration brokerConfig, String phoneId) {
+
+    private void logMessage(ObjectNode payload, BrokerConfiguration brokerConfig, String phoneId) {
         Boolean messageLoggerEnable = brokerConfig.getMessageLogerConfig().getEnabled();
         if (messageLoggerEnable) {
             String messageLoggerURL = brokerConfig.getMessageLogerConfig().getUrl();
@@ -51,44 +51,54 @@ public class MessageLogger {
                 HttpHeaders headers = new HttpHeaders();
                 headers.set("Content-Type", "application/json");
 
-                // Add sender to the payload
-                payload.put("sender", sender);
-                if (phoneId != null) {
-                    payload.put("phoneId", phoneId);
-                }
-
                 HttpEntity<ObjectNode> requestEntity = new HttpEntity<>(payload, headers);
 
                 try {
                     ResponseEntity<String> response = restTemplate.exchange(messageLoggerURL, HttpMethod.POST, requestEntity, String.class);
                     if (response.getStatusCode().is2xxSuccessful()) {
-                        log.info("Message Logger response received successfully");
+                        log.info("Message Logger response sent successfully");
                     } else {
-                        log.error("Failed to get Message Logger response: " + response.getStatusCode());
+                        log.error("Failed to send Message Logger response: " + response.getStatusCode());
                     }
                 } catch (Exception e) {
-                    log.error("Exception occurred while getting Message Logger response", e);
+                    log.error("Exception occurred while sending Message Logger response", e);
                 }
             }
         }
     }
 
     @Async
-    public void recordWebhookIncomming(JsonNode webhookData, BrokerConfiguration brokerConfig) {
-        ObjectNode payload = objectMapper.createObjectNode();
-        payload.set("data", webhookData);
-        logMessage(payload, "Client", brokerConfig, null);
-        log.info("logging message from Client"); 
+    public void sendBulkMessage(JsonNode incomingData, ObjectNode[] outgoingMessages, 
+    String companyPhoneID, BrokerConfiguration brokerConfig, String clientPhone) {
+        // Create an array node to hold all messages
+        ArrayNode messagesArray = objectMapper.createArrayNode();
 
-    }
+        // Add the stored incoming message if present
+        if (incomingData != null) {
+            ObjectNode incomingMessage = objectMapper.createObjectNode();
+            incomingMessage.put("sender", "Client");
+            incomingMessage.set("data", incomingData);
+            messagesArray.add(incomingMessage);
 
-    @Async
-    public void recordAPIMessageOutgoing(ObjectNode whatsappMessagePayload, String phoneId,  BrokerConfiguration brokerConfig) {
+        }
+
+        // Add each outgoing message with "Syntphony" as the sender
+        for (ObjectNode outgoing : outgoingMessages) {
+            ObjectNode outgoingMessage = objectMapper.createObjectNode();
+            outgoingMessage.put("sender", "Syntphony");
+            outgoingMessage.set("data", outgoing);
+            messagesArray.add(outgoingMessage);
+        }
+
+        // Create the payload to send
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.set("data", whatsappMessagePayload);
-        logMessage(payload, "Syntphony", brokerConfig, phoneId);
-        log.info("logging message from Syntphony"); 
+        payload.set("messages", messagesArray);
+        payload.put("clientPhone", clientPhone);
+        payload.put("companyPhoneID", companyPhoneID);
+        
+        // Send the payload to the logger service
+        logMessage(payload, brokerConfig, companyPhoneID);
+        log.info("Sent bulk message set including stored incoming and outgoing messages for phoneId: {}", companyPhoneID);
     }
 }
-
 
