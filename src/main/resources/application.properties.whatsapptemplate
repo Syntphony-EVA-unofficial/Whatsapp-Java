@@ -1,0 +1,10 @@
+# Application Config
+
+#for docker
+server.port=${PORT:8080}
+# Logging level
+logging.level.root=INFO
+
+webhook.verificationtoken = xxxx
+
+

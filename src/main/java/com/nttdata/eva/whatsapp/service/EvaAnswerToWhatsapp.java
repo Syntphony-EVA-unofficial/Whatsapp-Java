@@ -23,7 +23,7 @@ import com.nttdata.eva.whatsapp.messages.LocationMessage;
 import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
 import com.nttdata.eva.whatsapp.messages.ProductMessage;
 import com.nttdata.eva.whatsapp.messages.CatalogMessage;
-
+import com.nttdata.eva.whatsapp.messages.CustomHandoverMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.utils.MessageLogger;
@@ -119,6 +119,9 @@ public class EvaAnswerToWhatsapp {
                 modelFound = true;
             } else if (CatalogMessage.validate(answer)) {
                 data = CatalogMessage.create(data, answer);
+                modelFound = true;
+            } else if (CustomHandoverMessage.validate(answer)) {
+                data = CustomHandoverMessage.create(answer);
                 modelFound = true;
             }
             else {

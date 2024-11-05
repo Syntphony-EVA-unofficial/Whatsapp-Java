@@ -48,7 +48,7 @@ replay_pid*
 # Unignore .zip files in bot_template folder
 !eva bot template/*.zip
 
-src/main/resources/application.properties.whatsapptemplate
+src/main/resources/application.properties
 debugnotes
 cloudbuild.yaml
 

@@ -58,9 +58,6 @@ public class DocumentMessage {
         {
         documentNode.put("filename", documentJsondata.getFilename());
         }
-
-
-
         return data;
     }
 // "document": {
