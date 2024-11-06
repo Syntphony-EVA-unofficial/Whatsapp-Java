@@ -27,11 +27,10 @@ import com.nttdata.eva.whatsapp.messages.CustomHandoverMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.utils.MessageLogger;
-
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 
 import lombok.extern.slf4j.Slf4j;
-
 
 @Slf4j
 @Service
@@ -42,51 +41,43 @@ public class EvaAnswerToWhatsapp {
 
     @Autowired
     private MessageLogger messageLogger;
-    
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-
-
-
-
-    public ArrayList<ObjectNode> getWhatsappAPICalls(ResponseModel evaResponse, String from)
-    {
-        ArrayList<ObjectNode> messages = new ArrayList<>();
-        for (ResponseModel.Answer answer : evaResponse.getAnswers()) 
-            {
-            ObjectNode message = prepareMessages(answer, from);
-            if (message != null)
-                messages.add(message);
-            }
+    public ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> getWhatsappAPICalls(
+            ResponseModel evaResponse, String from) {
+        ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> messages = new ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>>();
+        for (ResponseModel.Answer answer : evaResponse.getAnswers()) {
+            SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> result = prepareMessages(answer, from);
+            if (result != null)
+                messages.add(result);
+        }
         return messages;
-
     }
 
-    private ObjectNode prepareMessages(ResponseModel.Answer answer, String from) {
-
-
-
-        log.info("Preparing body message for WhatsApp API");
-
-
+    private SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> prepareMessages(
+            ResponseModel.Answer answer, String from) {
 
         // Prepare data
         ObjectNode data = objectMapper.createObjectNode();
+        CustomHandoverMessage.CustomHandOverModel customHandoverModel = null;
         data.put("messaging_product", "whatsapp");
         data.put("recipient_type", "individual");
         data.put("to", from);
 
         // Determine the message type
-        // The only messages that do not have a technical text are text messages and buttons
+        // The only messages that do not have a technical text are text messages and
+        // buttons
         if (answer.getTechnicalText() == null) {
             if (EVAButtonMessage.validate(answer)) {
                 data = EVAButtonMessage.create(data, answer);
             } else {
-                //since eva cannot send empty answers, at this point we at least have a text message.
+                // since eva cannot send empty answers, at this point we at least have a text
+                // message.
                 data = TextMessage.create(data, answer);
             }
-            return data;
-        //rest of the message types require a technical text
+            return new SimpleEntry<>(data, customHandoverModel);
+            // rest of the message types require a technical text
         } else {
             boolean modelFound = false;
 
@@ -101,7 +92,7 @@ public class EvaAnswerToWhatsapp {
                 modelFound = true;
             } else if (VideoMessage.validate(answer)) {
                 data = VideoMessage.create(data, answer);
-                modelFound = true;            
+                modelFound = true;
             } else if (LocationRequestMessage.validate(answer)) {
                 data = LocationRequestMessage.create(data, answer);
                 modelFound = true;
@@ -121,41 +112,40 @@ public class EvaAnswerToWhatsapp {
                 data = CatalogMessage.create(data, answer);
                 modelFound = true;
             } else if (CustomHandoverMessage.validate(answer)) {
-                data = CustomHandoverMessage.create(answer);
+                customHandoverModel = CustomHandoverMessage.create(answer);
+                data = null;
                 modelFound = true;
-            }
-            else {
+            } else {
                 log.error("No valid message model found.");
             }
 
-
-    
             if (modelFound) {
-                return data;
+                return new SimpleEntry<>(data, customHandoverModel);
             } else {
                 log.error("No valid message model found.");
                 return null;
             }
         }
     }
-    public void sendListofMessagesToWhatsapp(ArrayList<ObjectNode> whatsappAPICalls, 
-    String facebookPhoneId, 
-    BrokerConfiguration brokerConfig, 
-    JsonNode incommingData,
-    String clientPhone) 
-    {
+
+    public void sendListofMessagesToWhatsapp(
+            ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> whatsappAPICalls,
+            String facebookPhoneId,
+            BrokerConfiguration brokerConfig,
+            JsonNode incommingData,
+            String clientPhone) {
         String facebookAccessToken = brokerConfig.getMetaConfig().getAccessToken();
-    
+
         // Accumulate outgoing messages for bulk sending
         ArrayList<ObjectNode> outgoingMessagesList = new ArrayList<>();
-    
-        for (ObjectNode bodyAPIcall : whatsappAPICalls) {
+
+        for (SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> bodyAPIcall : whatsappAPICalls) {
             // Send each message to the WhatsApp API
-            sendToWhatsappAPI(bodyAPIcall, facebookPhoneId, facebookAccessToken);
-    
+            sendToWhatsappAPI(bodyAPIcall.getKey(), facebookPhoneId, facebookAccessToken);
+
             // Collect outgoing messages for bulk logging
-            outgoingMessagesList.add(bodyAPIcall);
-    
+            outgoingMessagesList.add(bodyAPIcall.getKey());
+
             try {
                 Thread.sleep(1500); // Wait for 1500 milliseconds
             } catch (InterruptedException e) {
@@ -163,28 +153,25 @@ public class EvaAnswerToWhatsapp {
                 log.error("Thread was interrupted", e);
             }
         }
-    
+
         // Send all outgoing messages in one bulk operation
         if (!outgoingMessagesList.isEmpty()) {
             ObjectNode[] outgoingMessagesArray = outgoingMessagesList.toArray(new ObjectNode[0]);
-            messageLogger.sendBulkMessage(incommingData, outgoingMessagesArray, facebookPhoneId, brokerConfig, clientPhone);
+            messageLogger.sendBulkMessage(incommingData, outgoingMessagesArray, facebookPhoneId, brokerConfig,
+                    clientPhone);
         }
     }
-    
 
     public void sendToWhatsappAPI(ObjectNode bodyAPIcall, String facebookPhoneId, String facebookAccessToken) {
-        log.info("Sending message to WhatsApp API");
-        log.info("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
+        log.debug("Sending message to WhatsApp API");
+        log.debug("Body Data sended to Whatsapp: {}", bodyAPIcall.toPrettyString());
 
         HttpHeaders headers = new HttpHeaders();
 
         headers.set("Content-Type", "application/json");
         headers.set("Authorization", "Bearer " + facebookAccessToken);
 
-
         HttpEntity<ObjectNode> request = new HttpEntity<>(bodyAPIcall, headers);
-
-
 
         String url = String.format("https://graph.facebook.com/v21.0/%s/messages", facebookPhoneId);
 
@@ -205,4 +192,3 @@ public class EvaAnswerToWhatsapp {
     }
 
 }
-

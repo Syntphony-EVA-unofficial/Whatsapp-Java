@@ -27,12 +27,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-
 @Slf4j
 @Service
 public class WebhookToEVA {
-
-   
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -43,11 +40,11 @@ public class WebhookToEVA {
     private RestTemplate restTemplate;
 
     public EVARequestTuple handleText(WebhookData.Message message) {
-       
+
         log.info("Handling text message");
         Map<String, Object> textMap = message.getText();
         String EVA_content = (String) textMap.get("body");
-    
+
         if (message.getContext() != null) {
             ObjectNode EVA_context = objectMapper.convertValue(message.getContext(), ObjectNode.class);
             return new EVARequestTuple(EVA_content, EVA_context);
@@ -55,7 +52,7 @@ public class WebhookToEVA {
 
         ObjectNode EVA_context = null;
         return new EVARequestTuple(EVA_content, EVA_context);
-    
+
     }
 
     public EVARequestTuple handleInteractive(WebhookData.Message message) {
@@ -106,8 +103,7 @@ public class WebhookToEVA {
             JsonNode responseJsonNode = nfmReplyNode.path("response_json");
             ObjectNode EVA_context = objectMapper.createObjectNode();
             EVA_context.set("response_json", responseJsonNode);
-            
-        
+
             return new EVARequestTuple(EVA_content, EVA_context);
         } else {
             log.warn("Interactive message subtype not supported: {}", subtype);
@@ -142,7 +138,8 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
-    public EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message, BrokerConfiguration brokerConfig) {
+    public EVARequestTuple convert(WebhookData webhookData, WebhookData.Message message,
+            BrokerConfiguration brokerConfig) {
         try {
             String type = message.getType();
             if (type != null) {
@@ -194,7 +191,7 @@ public class WebhookToEVA {
         ObjectNode statusNode = objectMapper.convertValue(status, ObjectNode.class);
         evaContextNode.set("status", statusNode);
         return new EVARequestTuple(EVA_content, evaContextNode);
-    
+
     }
 
     private EVARequestTuple handleOrder(Message message) {
@@ -207,11 +204,11 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, EVA_context);
     }
 
-    private EVARequestTuple handleImage(Message message,  BrokerConfiguration brokerConfig) {
-            
+    private EVARequestTuple handleImage(Message message, BrokerConfiguration brokerConfig) {
+
         log.info("Handling image emessage");
         try {
-            
+
             String imageID = message.getImage().getId();
             String imageURL = whatsappMediaUtils.getImageURL(imageID, brokerConfig.getMetaConfig().getAccessToken());
             ObjectNode context = objectMapper.createObjectNode();
@@ -226,34 +223,32 @@ public class WebhookToEVA {
         String EVA_content = " ";
         ObjectNode evaContextNode = objectMapper.createObjectNode();
         evaContextNode.put("templateClicked", true);
-        return new EVARequestTuple(EVA_content, evaContextNode);        
+        return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
     private EVARequestTuple handleButtonTemplate(Message message) {
-            log.info("Handling button template message");
+        log.info("Handling button template message");
 
-            String EVA_content = " ";
-            if (message.getButton() != null && message.getButton().getText() != null) {
-                EVA_content = message.getButton().getText();
-            }
-            ObjectNode evaContextNode = objectMapper.createObjectNode();
-            evaContextNode.put("templateClicked", true);
-    
-            return new EVARequestTuple(EVA_content, evaContextNode);
+        String EVA_content = " ";
+        if (message.getButton() != null && message.getButton().getText() != null) {
+            EVA_content = message.getButton().getText();
+        }
+        ObjectNode evaContextNode = objectMapper.createObjectNode();
+        evaContextNode.put("templateClicked", true);
+
+        return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
-    public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService session, String userRef, String displayPhone) {
-        String instance = session.getBrokerConfig().getEvaConfig().getEnvironment().getInstance();
-        String orgUUID = session.getBrokerConfig().getEvaConfig().getOrganization().getUuid();
-        String envUUID = session.getBrokerConfig().getEvaConfig().getEnvironment().getUuid();
-        String botUUID = session.getBrokerConfig().getEvaConfig().getBot().getUuid();
-        String channelUUID = session.getBrokerConfig().getEvaConfig().getBot().getChanneluuid();
-
-        
+    public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService sessionService, String userRef) {
+        String instance = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getInstance();
+        String orgUUID = sessionService.getBrokerConfig().getEvaConfig().getOrganization().getUuid();
+        String envUUID = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getUuid();
+        String botUUID = sessionService.getBrokerConfig().getEvaConfig().getBot().getUuid();
+        String channelUUID = sessionService.getBrokerConfig().getEvaConfig().getBot().getChanneluuid();
 
         restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 
-        String apiKey = session.getBrokerConfig().getEvaConfig().getEnvironment().getApikey();
+        String apiKey = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getApikey();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("API-KEY", apiKey);
@@ -270,7 +265,7 @@ public class WebhookToEVA {
         while (!successCall && retryCount < maxRetries) {
             retryCount++;
 
-            String evaToken = session.getEvaToken();
+            String evaToken = sessionService.getEvaToken();
             if (evaToken != null) {
                 headers.setBearerAuth(evaToken);
                 data.put("text", evaRequest.getContent());
@@ -285,9 +280,9 @@ public class WebhookToEVA {
             try {
 
                 String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
-                instance, orgUUID, envUUID, botUUID, channelUUID).trim();
+                        instance, orgUUID, envUUID, botUUID, channelUUID).trim();
                 StringBuilder urlBuilder = new StringBuilder(baseUrl);
-                String sessionCode = session.getEvaSessionCode();
+                String sessionCode = sessionService.getEvaSessionCode();
                 if (sessionCode != null) {
                     urlBuilder.append("/").append(sessionCode);
                     log.info("Session code is " + sessionCode);
@@ -301,12 +296,11 @@ public class WebhookToEVA {
                 String jsonResponse = objectMapper.writeValueAsString(response);
 
                 ResponseModel responseModel = objectMapper.readValue(jsonResponse, ResponseModel.class);
-                session.setEvaSessionCode(responseModel.getSessionCode());
-                session.saveSession();
+                sessionService.setEvaSessionCode(responseModel.getSessionCode());
                 return responseModel;
             } catch (HttpClientErrorException.Unauthorized e) {
                 log.warn("Unauthorized error, refreshing token and retrying: {}", e.getMessage());
-                session.deleteToken();
+                sessionService.deleteToken();
             } catch (RestClientException e) {
                 log.error("Error sending message to EVA: {}", e.getMessage());
             } catch (Exception e) {

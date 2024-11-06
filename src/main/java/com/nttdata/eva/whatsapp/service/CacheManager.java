@@ -1,6 +1,6 @@
 package com.nttdata.eva.whatsapp.service;
 
-
+import com.nttdata.eva.whatsapp.model.SessionDestination;
 import com.nttdata.eva.whatsapp.model.UserSessionData;
 
 import java.util.HashMap;
@@ -17,12 +17,26 @@ public class CacheManager {
     }
 
     public UserSessionData getFromCache(String userKey) {
-        if (this.containsUser(userKey)) {
-            return cacheUser.get(userKey);
-        } else {
-            UserSessionData newSessionData = new UserSessionData();
-            return newSessionData;
+        UserSessionData sessionData = cacheUser.get(userKey);
+
+        if (sessionData == null) {
+            return createNewUser();
         }
+
+        // Check if session is too old (e.g., 24 hours)
+        long currentTime = System.currentTimeMillis();
+        long lastInteraction = sessionData.getLastInteractionTime();
+        long timeThreshold = 15 * 60 * 1000; // 15min in milliseconds
+
+        // refresh by inactivity only if destination is human agent
+        if (currentTime - lastInteraction > timeThreshold
+                && SessionDestination.HUMAN_AGENT.equals(sessionData.getDestination())) {
+            return createNewUser();
+        }
+
+        sessionData.setLastInteractionTime(currentTime);
+
+        return sessionData;
     }
 
     public void removeFromCache(String userKey) {
@@ -35,5 +49,10 @@ public class CacheManager {
 
     public int getSize() {
         return cacheUser.size();
+    }
+
+    private UserSessionData createNewUser() {
+        UserSessionData newSessionData = new UserSessionData();
+        return newSessionData;
     }
 }

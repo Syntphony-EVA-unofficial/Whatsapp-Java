@@ -1,4 +1,5 @@
-package com.nttdata.eva.whatsapp.messages;  
+package com.nttdata.eva.whatsapp.messages;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,7 +15,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Set;
 
-
 @Slf4j
 public class CustomHandoverMessage {
 
@@ -27,15 +27,15 @@ public class CustomHandoverMessage {
             // Convert Map to JSON string
             String jsonString = objectMapper.writeValueAsString(answer.getTechnicalText());
             // Convert JSON string to VideoModel
-            HandOverModel jsondata = objectMapper.readValue(jsonString, HandOverModel.class);
+            CustomHandOverModel jsondata = objectMapper.readValue(jsonString, CustomHandOverModel.class);
 
             // Validate the VideoModel
-            Set<ConstraintViolation<HandOverModel>> violations = validator.validate(jsondata);
+            Set<ConstraintViolation<CustomHandOverModel>> violations = validator.validate(jsondata);
 
             if (violations.isEmpty()) {
                 return true;
             } else {
-                for (ConstraintViolation<HandOverModel> violation : violations) {
+                for (ConstraintViolation<CustomHandOverModel> violation : violations) {
                     log.debug("Validation error: {}", violation.getMessage());
                 }
                 return false;
@@ -46,16 +46,15 @@ public class CustomHandoverMessage {
         }
     }
 
-    public static ObjectNode create(Answer answer) {
+    public static CustomHandOverModel create(Answer answer) {
         try {
             // Convert Map to JSON string
             String jsonString = objectMapper.writeValueAsString(answer.getTechnicalText());
             // Convert JSON string to HandOverModel
-            HandOverModel jsondata = objectMapper.readValue(jsonString, HandOverModel.class);
+            CustomHandOverModel jsondata = objectMapper.readValue(jsonString, CustomHandOverModel.class);
 
             // Convert HandOverModel back to ObjectNode
-            ObjectNode validatedNode = objectMapper.valueToTree(jsondata);
-            return validatedNode;
+            return jsondata;
         } catch (Exception e) {
             log.debug("Error creating ObjectNode: {}", e.getMessage());
             return null;
@@ -64,7 +63,7 @@ public class CustomHandoverMessage {
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class HandOverModel {
+    public static class CustomHandOverModel {
 
         @NotNull(message = "Type must not be null")
         @Pattern(regexp = "handover", message = "Type must be 'handover'")
@@ -75,13 +74,14 @@ public class CustomHandoverMessage {
 
         @NotNull(message = "exit_command must not be null")
         private String exit_command;
+
+        private String welcomeback;
     }
 
 }
 
 // {
-//     "type":"handover",
-//     "handover": "SYNTPHONY_PORTAL",
-//     "exit_command":"exit"
+// "type":"handover",
+// "handover": "SYNTPHONY_PORTAL",
+// "exit_command":"exit"
 // }
-
