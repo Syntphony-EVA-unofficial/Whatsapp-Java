@@ -133,7 +133,7 @@ public class WhatsappMediaUtils {
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("mediaURL", audioURL);
         payload.put("token", metaToken);
-        payload.set("audio", objectMapper.valueToTree(audiomap));
+        // payload.set("audio", objectMapper.valueToTree(audiomap));
 
         String requestBody;
         try {
