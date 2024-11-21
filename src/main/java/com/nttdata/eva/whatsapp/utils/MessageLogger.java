@@ -1,12 +1,8 @@
 package com.nttdata.eva.whatsapp.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
-
-import lombok.extern.slf4j.Slf4j;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -17,9 +13,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -101,21 +101,29 @@ public class MessageLogger {
         // Create an array node to hold all messages
         ArrayNode messagesArray = objectMapper.createArrayNode();
 
+        String SyntphonyORHumanAgentSender = "Syntphony";
+        String mode = "BOT";
         // Add the stored incoming message if present
         if (incomingData != null) {
             ObjectNode incomingMessage = objectMapper.createObjectNode();
             incomingMessage.put("sender", "Client");
-            incomingMessage.put("mode", "BOT");
+            incomingMessage.put("mode", mode);
             incomingMessage.set("payload", incomingData);
             messagesArray.add(incomingMessage);
-
         }
+        else
+        {
+            SyntphonyORHumanAgentSender = "Human Agent";
+            mode = "HANDOVER";
+            
+        }
+
 
         // Add each outgoing message with "Syntphony" as the sender
         for (ObjectNode outgoing : outgoingMessages) {
             ObjectNode outgoingMessage = objectMapper.createObjectNode();
-            outgoingMessage.put("sender", "Syntphony");
-            outgoingMessage.put("mode", "BOT");
+            outgoingMessage.put("sender", SyntphonyORHumanAgentSender);
+            outgoingMessage.put("mode", mode);
             outgoingMessage.set("payload", outgoing);
             messagesArray.add(outgoingMessage);
         }

@@ -1,10 +1,10 @@
 package com.nttdata.eva.whatsapp.service;
 
-import com.nttdata.eva.whatsapp.model.SessionDestination;
-import com.nttdata.eva.whatsapp.model.UserSessionData;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.nttdata.eva.whatsapp.model.SessionDestination;
+import com.nttdata.eva.whatsapp.model.UserSessionData;
 
 public class CacheManager {
 

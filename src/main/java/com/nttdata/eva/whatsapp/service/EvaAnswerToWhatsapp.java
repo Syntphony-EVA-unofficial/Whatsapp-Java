@@ -55,7 +55,7 @@ public class EvaAnswerToWhatsapp {
         return messages;
     }
 
-    private SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> prepareMessages(
+    public SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> prepareMessages(
             ResponseModel.Answer answer, String from) {
 
         // Prepare data

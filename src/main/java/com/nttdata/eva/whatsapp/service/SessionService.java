@@ -1,5 +1,9 @@
 package com.nttdata.eva.whatsapp.service;
 
+import java.net.URI;
+import java.time.Instant;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.converter.FormHttpMessageConverter;
@@ -9,15 +13,11 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
-import com.nttdata.eva.whatsapp.model.UserSessionData;
 import com.nttdata.eva.whatsapp.model.SessionDestination;
-import java.net.URI;
+import com.nttdata.eva.whatsapp.model.UserSessionData;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Instant;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -32,16 +32,44 @@ public class SessionService {
         this.cacheManager = cacheManager;
     }
 
+   
+
     private String userID;
     private UserSessionData sessionData;
 
     @Getter
+
     private BrokerConfiguration brokerConfig;
+
+
+    public Boolean InitCacheHandover(String userID, BrokerConfiguration brokerConfig) {
+        this.userID = userID;
+        this.brokerConfig = brokerConfig;
+        sessionData = validateUserHandover(userID);
+        if (sessionData != null) {
+            return true;
+        }
+        return false;
+    }
 
     public void InitCache(String userID, BrokerConfiguration brokerConfig) {
         this.userID = userID;
         this.brokerConfig = brokerConfig;
         sessionData = cacheManager.getFromCache(userID);
+    }
+
+
+    public UserSessionData validateUserHandover(String userID) {
+
+        if (cacheManager.containsUser(userID)) {
+            UserSessionData sessionData = cacheManager.getFromCache(userID);
+
+            if (SessionDestination.HUMAN_AGENT.equals(sessionData.getDestination())) {
+                return sessionData;
+            }   
+        }
+    return null;
+
     }
 
     public String getUserID() {

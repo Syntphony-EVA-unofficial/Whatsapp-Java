@@ -1,27 +1,26 @@
 package com.nttdata.eva.whatsapp.controller;
 
+import java.util.Map;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
+import com.nttdata.eva.whatsapp.model.HandoverMessage;
 import com.nttdata.eva.whatsapp.model.WebhookData;
+import com.nttdata.eva.whatsapp.service.HandOverService;
 import com.nttdata.eva.whatsapp.service.WebhookService;
 import com.nttdata.eva.whatsapp.utils.ConfigLoader;
-import com.nttdata.eva.whatsapp.utils.MessageLogger;
 import com.nttdata.eva.whatsapp.utils.WebhookUtils;
-
-import java.util.Map;
-import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +33,8 @@ public class WebhookController {
     private WebhookService webhookService;
 
     @Autowired
+    private HandOverService handOverService;
+    @Autowired
     private WebhookUtils webhookUtils;
 
     @Autowired
@@ -42,7 +43,7 @@ public class WebhookController {
     @Autowired
     private ConfigLoader configLoader;
 
-    @GetMapping("/webhook")
+    @GetMapping("/meta-events")
     public ResponseEntity<String> verifyWebhook(HttpServletRequest request) {
 
         return webhookService.verify(request);
@@ -57,7 +58,46 @@ public class WebhookController {
         }
     }
 
-    @PostMapping("/webhook")
+    @PostMapping("/handover-messages")
+    public ResponseEntity<String> handleHandoverMessages(@RequestBody String requestBody,
+            HttpServletRequest request) {
+        BrokerConfiguration brokerConfig;
+
+        HandoverMessage handoverMessage;
+        try {
+            handoverMessage = objectMapper.readValue(requestBody, HandoverMessage.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse handover message: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request body");
+        }
+        log.info("Handover message received: {}", handoverMessage);
+        
+        Map<String, BrokerConfiguration> allBrokerConfigs = configLoader.getBrokerConfigs();
+
+        String phoneId = handoverMessage.getPhoneid();
+        if (allBrokerConfigs.containsKey(phoneId)) {
+            brokerConfig = allBrokerConfigs.get(phoneId);
+
+            handOverService.processIncomingMessage(handoverMessage, brokerConfig);
+
+        } else {
+            log.error("Phone ID {} does not exist in the map", phoneId);
+            // Get the set of keys
+            Set<String> keys = allBrokerConfigs.keySet();
+
+            // Print all keys
+            for (String key : keys) {
+                log.debug(key);
+            }
+
+            return ResponseEntity.status(400).body("Invalid request: Phone ID does not exist.");
+        }
+        
+        
+        return ResponseEntity.ok("Handover messages received");
+    }
+
+    @PostMapping("/meta-events")
     public ResponseEntity<String> handleIncomingUserMessage(@RequestBody String requestBody,
             HttpServletRequest request) {
         WebhookData webhookData;
