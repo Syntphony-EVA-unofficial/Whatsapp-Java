@@ -91,6 +91,14 @@ public class MessageLogger {
         return enabled && isValidURL(url);
     }
 
+    private boolean shouldSendMessage(String mode, BrokerConfiguration brokerConfig) {
+        if (mode.equals("BOT")) {
+            Boolean sendBotMessages = brokerConfig.getMessageLogerConfig().getSendBotMessages();
+            return sendBotMessages == null || sendBotMessages; // If null, default to true
+        }
+        return true; // Always send HANDOVER messages
+    }
+
     @Async
     public void sendBulkMessage(JsonNode incomingData, ObjectNode[] outgoingMessages,
             String companyPhoneID, BrokerConfiguration brokerConfig, String clientPhone) {
@@ -98,7 +106,6 @@ public class MessageLogger {
             return;
         }
 
-        // Create an array node to hold all messages
         ArrayNode messagesArray = objectMapper.createArrayNode();
 
         String SyntphonyORHumanAgentSender = "Syntphony";
@@ -118,14 +125,15 @@ public class MessageLogger {
             
         }
 
-
-        // Add each outgoing message with "Syntphony" as the sender
-        for (ObjectNode outgoing : outgoingMessages) {
-            ObjectNode outgoingMessage = objectMapper.createObjectNode();
-            outgoingMessage.put("sender", SyntphonyORHumanAgentSender);
-            outgoingMessage.put("mode", mode);
-            outgoingMessage.set("payload", outgoing);
-            messagesArray.add(outgoingMessage);
+        if (shouldSendMessage(mode, brokerConfig)) {
+            // Add each outgoing message
+            for (ObjectNode outgoing : outgoingMessages) {
+                ObjectNode outgoingMessage = objectMapper.createObjectNode();
+                outgoingMessage.put("sender", SyntphonyORHumanAgentSender);
+                outgoingMessage.put("mode", mode);
+                outgoingMessage.set("payload", outgoing);
+                messagesArray.add(outgoingMessage);
+            }
         }
 
         // Create the payload to send
@@ -134,9 +142,9 @@ public class MessageLogger {
         payload.put("clientPhone", clientPhone);
         payload.put("companyPhoneID", companyPhoneID);
 
-        // Send the payload to the logger service
-        logMessage(payload, brokerConfig.getMessageLogerConfig().getUrl());
-        log.info("Sent bulk message set including stored incoming and outgoing messages for phoneId: {}",
-                companyPhoneID);
+            logMessage(payload, brokerConfig.getMessageLogerConfig().getUrl());
+            log.info("Sent bulk message set including stored incoming and outgoing messages for phoneId: {}",
+                    companyPhoneID);
+        }
     }
-}
+

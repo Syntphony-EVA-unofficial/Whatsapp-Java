@@ -16,6 +16,8 @@ public class BrokerConfiguration {
     public static class MessageLoger {
         private String url;
         private Boolean enabled;
+        private Boolean sendBotMessages = true;  // Add this new field with default value true
+
     }
 
     @Data

@@ -1,9 +1,4 @@
 package com.nttdata.eva.whatsapp.utils;
-import javax.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
-import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -15,6 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -89,9 +93,10 @@ public class ConfigLoader {
         String MessageLogerstringEnable = properties.getProperty("messagelogger.enabled", "false");
         boolean MessageLogerbooleanEnabled = MessageLogerstringEnable != null && Boolean.parseBoolean(MessageLogerstringEnable);
         messageLogerConfig.setEnabled(MessageLogerbooleanEnabled);
-
-
         
+        String messageLogerStringSendBotMessage = properties.getProperty("messagelogger.send_bot_message", "true");
+        boolean sendbotmessages = messageLogerStringSendBotMessage != null && Boolean.parseBoolean(messageLogerStringSendBotMessage);
+        messageLogerConfig.setSendBotMessages(sendbotmessages);
 
         BrokerConfiguration.STT STTConfig = new BrokerConfiguration.STT();
         STTConfig.setUrl(properties.getProperty("google.stt.url", "0.0.0.0"));
