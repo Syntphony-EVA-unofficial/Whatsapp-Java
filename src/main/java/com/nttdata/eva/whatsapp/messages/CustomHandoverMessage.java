@@ -1,10 +1,11 @@
 package com.nttdata.eva.whatsapp.messages;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.messages.InteractiveListMessage.IL_ListMessage;
 import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -13,7 +14,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Set;
 
 @Slf4j
 public class CustomHandoverMessage {
@@ -81,7 +81,8 @@ public class CustomHandoverMessage {
 }
 
 // {
-// "type":"handover",
-// "handover": "SYNTPHONY_PORTAL",
-// "exit_command":"exit"
-// }
+//     "type":"handover",
+//     "handover": "SYNTPHONY_PORTAL",
+//     "exit_command":"exit",
+//     "welcomeback":"You are now connected with the Virtual Assistant"
+//     }

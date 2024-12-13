@@ -1,5 +1,8 @@
 package com.nttdata.eva.whatsapp.service;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -11,24 +14,22 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.messages.CatalogMessage;
+import com.nttdata.eva.whatsapp.messages.CustomHandoverMessage;
 import com.nttdata.eva.whatsapp.messages.DocumentMessage;
+import com.nttdata.eva.whatsapp.messages.EVAButtonMessage;
 import com.nttdata.eva.whatsapp.messages.FlowMessage;
 import com.nttdata.eva.whatsapp.messages.ImageMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveListMessage;
 import com.nttdata.eva.whatsapp.messages.InteractiveReplyButtonMessage;
-import com.nttdata.eva.whatsapp.messages.EVAButtonMessage;
-import com.nttdata.eva.whatsapp.messages.TextMessage;
-import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.messages.LocationMessage;
 import com.nttdata.eva.whatsapp.messages.LocationRequestMessage;
 import com.nttdata.eva.whatsapp.messages.ProductMessage;
-import com.nttdata.eva.whatsapp.messages.CatalogMessage;
-import com.nttdata.eva.whatsapp.messages.CustomHandoverMessage;
+import com.nttdata.eva.whatsapp.messages.TextMessage;
+import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.ResponseModel;
 import com.nttdata.eva.whatsapp.utils.MessageLogger;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,10 +48,14 @@ public class EvaAnswerToWhatsapp {
     public ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> getWhatsappAPICalls(
             ResponseModel evaResponse, String from) {
         ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> messages = new ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>>();
-        for (ResponseModel.Answer answer : evaResponse.getAnswers()) {
-            SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> result = prepareMessages(answer, from);
-            if (result != null)
-                messages.add(result);
+        if (evaResponse.getAnswers() != null) {
+            for (ResponseModel.Answer answer : evaResponse.getAnswers()) {
+                SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> result = prepareMessages(answer, from);
+                if (result != null)
+                    messages.add(result);
+            }
+        } else {
+            log.error("No answers found in the response");
         }
         return messages;
     }
