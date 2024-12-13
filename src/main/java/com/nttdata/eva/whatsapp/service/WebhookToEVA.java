@@ -116,7 +116,7 @@ public class WebhookToEVA {
         try {
             Map<String, Object> AudioMap = message.getAudio();
             String audioID = (String) AudioMap.get("id");
-            EVARequestTuple audioResult = whatsappMediaUtils.getAudioIDorSTT(audioID, brokerConfig, message.getAudio());
+            EVARequestTuple audioResult = whatsappMediaUtils.getAudioIDorSTT(audioID, brokerConfig);
             return audioResult;
 
         } catch (Exception e) {
