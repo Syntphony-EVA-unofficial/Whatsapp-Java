@@ -28,7 +28,7 @@ import com.nttdata.eva.whatsapp.messages.ProductMessage;
 import com.nttdata.eva.whatsapp.messages.TextMessage;
 import com.nttdata.eva.whatsapp.messages.VideoMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
-import com.nttdata.eva.whatsapp.model.ResponseModel;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel;
 import com.nttdata.eva.whatsapp.utils.MessageLogger;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,10 +46,16 @@ public class EvaAnswerToWhatsapp {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> getWhatsappAPICalls(
-            ResponseModel evaResponse, String from) {
+            EvaResponseModel evaResponse, String from) {
         ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> messages = new ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>>();
+        
+        if (evaResponse == null) {
+            log.error("EvaResponseModel is null");
+            return messages; // Return an empty list or handle as needed
+        }
+        
         if (evaResponse.getAnswers() != null) {
-            for (ResponseModel.Answer answer : evaResponse.getAnswers()) {
+            for (EvaResponseModel.Answer answer : evaResponse.getAnswers()) {
                 SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> result = prepareMessages(answer, from);
                 if (result != null)
                     messages.add(result);
@@ -61,7 +67,7 @@ public class EvaAnswerToWhatsapp {
     }
 
     public SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel> prepareMessages(
-            ResponseModel.Answer answer, String from) {
+            EvaResponseModel.Answer answer, String from) {
 
         // Prepare data
         ObjectNode data = objectMapper.createObjectNode();

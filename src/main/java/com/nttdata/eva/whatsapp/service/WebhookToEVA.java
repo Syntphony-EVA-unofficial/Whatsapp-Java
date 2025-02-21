@@ -1,19 +1,5 @@
 package com.nttdata.eva.whatsapp.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
-import com.nttdata.eva.whatsapp.model.EVARequestTuple;
-import com.nttdata.eva.whatsapp.model.ResponseModel;
-import com.nttdata.eva.whatsapp.model.WebhookData;
-import com.nttdata.eva.whatsapp.model.WebhookData.Message;
-import com.nttdata.eva.whatsapp.model.WebhookData.Status;
-import com.nttdata.eva.whatsapp.utils.WhatsappMediaUtils;
-
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +12,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
+import com.nttdata.eva.whatsapp.model.EVARequestTuple;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel;
+import com.nttdata.eva.whatsapp.model.WebhookData;
+import com.nttdata.eva.whatsapp.model.WebhookData.Message;
+import com.nttdata.eva.whatsapp.model.WebhookData.Status;
+import com.nttdata.eva.whatsapp.utils.WhatsappMediaUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -239,7 +239,7 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
-    public ResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService sessionService, String userRef) {
+    public EvaResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService sessionService, String userRef, String userID) {
         String instance = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getInstance();
         String orgUUID = sessionService.getBrokerConfig().getEvaConfig().getOrganization().getUuid();
         String envUUID = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getUuid();
@@ -265,7 +265,7 @@ public class WebhookToEVA {
         while (!successCall && retryCount < maxRetries) {
             retryCount++;
 
-            String evaToken = sessionService.getEvaToken();
+            String evaToken = sessionService.getEvaToken(userID);
             if (evaToken != null) {
                 headers.setBearerAuth(evaToken);
                 data.put("text", evaRequest.getContent());
@@ -282,7 +282,7 @@ public class WebhookToEVA {
                 String baseUrl = String.format("https://%s/eva-broker/org/%s/env/%s/bot/%s/channel/%s/v1/conversations",
                         instance, orgUUID, envUUID, botUUID, channelUUID).trim();
                 StringBuilder urlBuilder = new StringBuilder(baseUrl);
-                String sessionCode = sessionService.getEvaSessionCode();
+                String sessionCode = sessionService.getEvaSessionCode(userID);
                 if (sessionCode != null) {
                     urlBuilder.append("/").append(sessionCode);
                     log.info("Session code is " + sessionCode);
@@ -295,12 +295,12 @@ public class WebhookToEVA {
                         Map.class);
                 String jsonResponse = objectMapper.writeValueAsString(response);
 
-                ResponseModel responseModel = objectMapper.readValue(jsonResponse, ResponseModel.class);
-                sessionService.setEvaSessionCode(responseModel.getSessionCode());
+                EvaResponseModel responseModel = objectMapper.readValue(jsonResponse, EvaResponseModel.class);
+                sessionService.setEvaSessionCode(responseModel.getSessionCode(), userID);
                 return responseModel;
             } catch (HttpClientErrorException.Unauthorized e) {
                 log.warn("Unauthorized error, refreshing token and retrying: {}", e.getMessage());
-                sessionService.deleteToken();
+                sessionService.deleteToken(userID);
             } catch (RestClientException e) {
                 log.error("Error sending message to EVA: {}", e.getMessage());
             } catch (Exception e) {

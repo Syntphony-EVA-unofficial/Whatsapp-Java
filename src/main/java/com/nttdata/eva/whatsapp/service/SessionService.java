@@ -34,80 +34,70 @@ public class SessionService {
 
    
 
-    private String userID;
-    private UserSessionData sessionData;
+    //private String userID;
+    //private UserSessionData sessionData;
 
     @Getter
-
     private BrokerConfiguration brokerConfig;
 
 
     public Boolean InitCacheHandover(String userID, BrokerConfiguration brokerConfig) {
-        this.userID = userID;
         this.brokerConfig = brokerConfig;
-        sessionData = validateUserHandover(userID);
-        if (sessionData != null) {
-            return true;
-        }
-        return false;
+
+        return validateUserHandover(userID);
     }
 
-    public void InitCache(String userID, BrokerConfiguration brokerConfig) {
-        this.userID = userID;
+    public void InitCache(BrokerConfiguration brokerConfig) {
         this.brokerConfig = brokerConfig;
-        sessionData = cacheManager.getFromCache(userID);
     }
 
 
-    public UserSessionData validateUserHandover(String userID) {
+    public Boolean validateUserHandover(String userID) {
 
         if (cacheManager.containsUser(userID)) {
             UserSessionData sessionData = cacheManager.getFromCache(userID);
 
             if (SessionDestination.HUMAN_AGENT.equals(sessionData.getDestination())) {
-                return sessionData;
+                return true;
             }   
         }
-    return null;
+        return false;
 
     }
 
-    public String getUserID() {
-        return userID;
+    
+    public String getEvaSessionCode(String userID) {
+        return cacheManager.getFromCache(userID).getEvaSessionCode();
     }
 
-    public String getEvaSessionCode() {
-        return sessionData.getEvaSessionCode();
+    public void setWelcomeback(String welcomeback, String userID) {
+        cacheManager.getFromCache(userID).setWelcomeBack(welcomeback);
     }
 
-    public void setWelcomeback(String welcomeback) {
-        sessionData.setWelcomeBack(welcomeback);
+    public String getWelcomeback(String userID) {
+        return cacheManager.getFromCache(userID).getWelcomeBack();
     }
 
-    public String getWelcomeback() {
-        return sessionData.getWelcomeBack();
-    }
-
-    public String getEvaToken() {
-        if (sessionData.getEvaToken() == null
-                || Instant.now().minusSeconds(850).isAfter(sessionData.getEvaTokenTimestamp())) {
-            sessionData.setEvaToken(generateToken());
-            updateTokenTimestamp();
+    public String getEvaToken(String userID) {
+        if (cacheManager.getFromCache(userID).getEvaToken() == null
+                || Instant.now().minusSeconds(850).isAfter(cacheManager.getFromCache(userID).getEvaTokenTimestamp())) {
+            cacheManager.getFromCache(userID).setEvaToken(generateToken(userID));
+            updateTokenTimestamp(userID);
         }
 
-        return sessionData.getEvaToken();
+        return cacheManager.getFromCache(userID).getEvaToken();
     }
 
-    public void setEvaSessionCode(String sessionCode) {
+    public void setEvaSessionCode(String sessionCode, String userID) {
 
-        sessionData.setEvaSessionCode(sessionCode);
+        cacheManager.getFromCache(userID).setEvaSessionCode(sessionCode);
     }
 
-    public void deleteToken() {
-        sessionData.setEvaToken(null);
+    public void deleteToken(String userID) {
+        cacheManager.getFromCache(userID).setEvaToken(null);
     }
 
-    private String generateToken() {
+    private String generateToken(String userID) {
         log.info("Enter to function Token Gen TIME: {}", Instant.now());
 
         try {
@@ -132,7 +122,7 @@ public class SessionService {
 
             if (mapResult != null && mapResult.containsKey("access_token")) {
                 log.info("Token generated successfully");
-                sessionData.deleteSessionCode();
+                cacheManager.getFromCache(userID).deleteSessionCode();
                 return mapResult.get("access_token");
             } else {
                 log.error("Failed to generate token: No access token in response");
@@ -144,35 +134,34 @@ public class SessionService {
         }
     }
 
-    void updateTokenTimestamp() {
-        sessionData.setEvaTokenTimestamp(Instant.now());
+    void updateTokenTimestamp(String userID) {
+        cacheManager.getFromCache(userID).setEvaTokenTimestamp(Instant.now());
     }
 
-    public void saveSession() {
-        cacheManager.addToCache(userID, sessionData.clone());
+    public void saveSession(String userID) {
+        cacheManager.addToCache(userID, cacheManager.getFromCache(userID).clone());
         log.info("Session saved for UserID: {}", userID);
     }
 
-    public void setDestination(SessionDestination destination) {
-        sessionData.setDestination(destination);
+    public void setDestination(SessionDestination destination, String userID) {
+        cacheManager.getFromCache(userID).setDestination(destination);
     }
 
-    public void setExitWord(String exitWord) {
-        sessionData.setExitWord(exitWord);
+    public void setExitWord(String exitWord, String userID) {
+        cacheManager.getFromCache(userID).setExitWord(exitWord);
     }
 
-    public String getExitWord() {
-        return sessionData.getExitWord();
+    public String getExitWord(String userID) {
+        return cacheManager.getFromCache(userID).getExitWord();
     }
 
-    public SessionDestination getDestination() {
-        return sessionData.getDestination();
+    public SessionDestination getDestination(String userID) {
+        return cacheManager.getFromCache(userID).getDestination();
     }
 
-    @Override
-    public String toString() {
+    public String toString(String userID) {
         return String.format("SessionService{destination=%s, exitWord='%s', ID=%s, sessionCode=%s}",
-                sessionData.getDestination(), sessionData.getExitWord(), userID, sessionData.getEvaSessionCode());
+                cacheManager.getFromCache(userID).getDestination(), cacheManager.getFromCache(userID).getExitWord(), userID, cacheManager.getFromCache(userID).getEvaSessionCode());
     }
 
 }

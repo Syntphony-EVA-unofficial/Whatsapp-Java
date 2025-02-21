@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel.Answer;
 
 import java.util.List;
 import java.util.Set;

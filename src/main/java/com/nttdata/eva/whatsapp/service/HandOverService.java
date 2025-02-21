@@ -10,8 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nttdata.eva.whatsapp.messages.CustomHandoverMessage;
 import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel;
 import com.nttdata.eva.whatsapp.model.HandoverMessage;
-import com.nttdata.eva.whatsapp.model.ResponseModel;
+import com.nttdata.eva.whatsapp.model.SessionDestination;
 import com.nttdata.eva.whatsapp.utils.MessageLogger;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,11 +47,11 @@ public class HandOverService {
                 return;
             }
 
-            ResponseModel responseModel = null;
+            EvaResponseModel responseModel = null;
             try {
 
                 // Convert JsonNode to ResponseModel directly
-                responseModel = objectMapper.treeToValue(handoverMessage.getEvaPayload(), ResponseModel.class);
+                responseModel = objectMapper.treeToValue(handoverMessage.getEvaPayload(), EvaResponseModel.class);
             
             } catch (Exception e) {
                 // Handle validation errors
@@ -58,25 +59,25 @@ public class HandOverService {
                 return;
             }
             
-
-
                     ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> whatsappAPICalls = evaAnswerToWhatsapp
-                            .getWhatsappAPICalls(responseModel,
-                                    clientPhone);
+                            .getWhatsappAPICalls(responseModel,clientPhone);
 
                     // Check for handover messages and update session
                     whatsappAPICalls.removeIf(call -> {
                         CustomHandoverMessage.CustomHandOverModel handover = call.getValue();
                         if (handover != null) {
-                            // Update session destination to human agent
-                            // sessionService.setDestination(SessionDestination.HUMAN_AGENT);
-                            // sessionService.setExitWord(handover.getExit_command());
-                            // sessionService.setWelcomeback(handover.getWelcomeback());
-                            log.info("Human agent changes the destination to bot");
-                            //TODO: Update session with human agent changes
-                            return true; // Remove this message from the array
+                            if (handover.getAction() != null && handover.getAction().equals("disconnect")) {
+                                // Update session destination to human agent
+                                sessionService.setDestination(SessionDestination.BOT, composedUserID);
+                                log.info("Human agent changes the destination to bot");
+
+                                sessionService.saveSession(composedUserID);
+                                log.info("session saved: {}", sessionService.toString(composedUserID));
+            
+                                return true; // Remove this message from the array
+                            }
                         }
-                        return false;
+                        return false; // Do not remove this message
                     });
 
                     // Only send remaining messages to WhatsApp

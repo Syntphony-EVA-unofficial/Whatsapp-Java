@@ -14,7 +14,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 
 import com.nttdata.eva.whatsapp.messages.ProductMessage.ProductModel;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel.Answer;
 import jakarta.validation.ConstraintViolation;
 import java.util.Set;
 

@@ -2,7 +2,7 @@ package com.nttdata.eva.whatsapp.messages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel.Answer;
 import com.nttdata.eva.whatsapp.model.WebhookData;
 
 import lombok.extern.slf4j.Slf4j;

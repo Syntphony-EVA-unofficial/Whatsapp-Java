@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel.Answer;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -76,6 +76,9 @@ public class CustomHandoverMessage {
         private String exit_command;
 
         private String welcomeback;
+
+        @Pattern(regexp = "connect|disconnect", message = "Action must be 'connect' or 'disconnect'")
+        private String action;
     }
 
 }

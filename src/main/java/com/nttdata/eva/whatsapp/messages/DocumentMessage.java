@@ -2,7 +2,7 @@ package com.nttdata.eva.whatsapp.messages;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nttdata.eva.whatsapp.model.ResponseModel.Answer;
+import com.nttdata.eva.whatsapp.model.EvaResponseModel.Answer;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
