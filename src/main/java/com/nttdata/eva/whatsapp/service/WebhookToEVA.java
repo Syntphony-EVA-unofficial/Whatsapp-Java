@@ -226,16 +226,16 @@ public class WebhookToEVA {
         return new EVARequestTuple(EVA_content, evaContextNode);
     }
 
-    public EvaResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService sessionService, String userRef, String userID) {
-        String instance = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getInstance();
-        String orgUUID = sessionService.getBrokerConfig().getEvaConfig().getOrganization().getUuid();
-        String envUUID = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getUuid();
-        String botUUID = sessionService.getBrokerConfig().getEvaConfig().getBot().getUuid();
-        String channelUUID = sessionService.getBrokerConfig().getEvaConfig().getBot().getChanneluuid();
+    public EvaResponseModel sendMessageToEVA(EVARequestTuple evaRequest, SessionService sessionService, String userRef, String userID, BrokerConfiguration brokerConfig) {
+        String instance = brokerConfig.getEvaConfig().getEnvironment().getInstance();
+        String orgUUID = brokerConfig.getEvaConfig().getOrganization().getUuid();
+        String envUUID = brokerConfig.getEvaConfig().getEnvironment().getUuid();
+        String botUUID = brokerConfig.getEvaConfig().getBot().getUuid();
+        String channelUUID = brokerConfig.getEvaConfig().getBot().getChanneluuid();
 
         restTemplate.getMessageConverters().add(new FormHttpMessageConverter());
 
-        String apiKey = sessionService.getBrokerConfig().getEvaConfig().getEnvironment().getApikey();
+        String apiKey = brokerConfig.getEvaConfig().getEnvironment().getApikey();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("API-KEY", apiKey);
@@ -247,12 +247,12 @@ public class WebhookToEVA {
         Map<String, Object> data = new HashMap<>();
         boolean successCall = false;
         int retryCount = 0;
-        int maxRetries = 2;
+        int maxRetries = 3;
 
         while (!successCall && retryCount < maxRetries) {
             retryCount++;
 
-            String evaToken = sessionService.getEvaToken(userID);
+            String evaToken = sessionService.getEvaToken(userID, brokerConfig);
             if (evaToken != null) {
                 headers.setBearerAuth(evaToken);
                 data.put("text", evaRequest.getContent());
@@ -260,7 +260,7 @@ public class WebhookToEVA {
                     data.put("context", evaRequest.getContext());
                 }
             } else {
-                log.error("EVA Token is null");
+                log.error("Error getting EVA Token");
                 return null;
             }
 
@@ -274,7 +274,7 @@ public class WebhookToEVA {
                     urlBuilder.append("/").append(sessionCode);
                     log.info("Session code is " + sessionCode);
                 } else {
-                    log.info("Session code is null");
+                    log.info("Session code is null, generating new interaction");
                 }
                 log.info("Sending message to EVA: {} at retry {}", data, retryCount);
                 HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(data, headers);
@@ -285,9 +285,14 @@ public class WebhookToEVA {
                 EvaResponseModel responseModel = objectMapper.readValue(jsonResponse, EvaResponseModel.class);
                 sessionService.setEvaSessionCode(responseModel.getSessionCode(), userID);
                 return responseModel;
-            } catch (HttpClientErrorException.Unauthorized e) {
-                log.warn("Unauthorized error, refreshing token and retrying: {}", e.getMessage());
-                sessionService.deleteToken(userID);
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() == 401) {
+                    log.warn("Unauthorized error (401), refreshing token and retrying", e);
+                    sessionService.deleteEvaToken(userID);
+                    sessionService.getEvaToken(userID, brokerConfig);
+                } else {
+                    log.error("HTTP error {} sending message to EVA", e.getStatusCode().value(), e);
+                }
             } catch (RestClientException e) {
                 log.error("Error sending message to EVA: {}", e.getMessage());
             } catch (Exception e) {

@@ -50,7 +50,7 @@ public class WebhookService {
             String userID = message.getFrom() + "-" + phoneId;
             
             sessionService.InitCache(userID, brokerConfig);
-            log.info("Current STARTING session state: {}", sessionService.toString());
+
 
             // Check if user is in human agent mode
             if (SessionDestination.HUMAN_AGENT.equals(sessionService.getDestination(userID))) {
@@ -68,8 +68,6 @@ public class WebhookService {
 
                     evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(ar, phoneId, brokerConfig, incommingData,
                             userPhone);
-                    sessionService.saveSession(userID);
-                    log.info("71 Current END session state: {}", sessionService.toString());
 
                     // TODO: send message to console to inform that the user wants to change the
                     // destination to bot again
@@ -88,7 +86,7 @@ public class WebhookService {
                     String userRef = message.getFrom();
                     // Get current session data
 
-                    EvaResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService, userRef, userID);
+                    EvaResponseModel evaResponse = webhookToEVA.sendMessageToEVA(evaRequest, sessionService, userRef, userID, brokerConfig);
                     String clientPhone = message.getFrom();
                     ArrayList<SimpleEntry<ObjectNode, CustomHandoverMessage.CustomHandOverModel>> whatsappAPICalls = evaAnswerToWhatsapp
                             .getWhatsappAPICalls(evaResponse,
@@ -113,8 +111,6 @@ public class WebhookService {
                         evaAnswerToWhatsapp.sendListofMessagesToWhatsapp(whatsappAPICalls, phoneId, brokerConfig,
                                 incommingData, clientPhone);
                     }
-                    sessionService.saveSession(userID);
-                    log.info("115 Current END session state: {}", sessionService.toString());
                 } else {
                     log.warn("Data to send to EVA is empty");
                 }

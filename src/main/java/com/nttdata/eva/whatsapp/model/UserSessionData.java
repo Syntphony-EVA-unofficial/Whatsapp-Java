@@ -1,10 +1,10 @@
 package com.nttdata.eva.whatsapp.model;
 
+import java.time.Instant;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.Instant;
-import com.nttdata.eva.whatsapp.model.SessionDestination;
 
 @Data
 @AllArgsConstructor
@@ -18,20 +18,5 @@ public class UserSessionData implements Cloneable {
     private long lastInteractionTime;
     String exitWord;
 
-    @Override
-    public UserSessionData clone() {
-        try {
-            UserSessionData cloned = (UserSessionData) super.clone();
-            // Deep copy of mutable fields if necessary
-            cloned.evaTokenTimestamp = (this.evaTokenTimestamp != null) ? Instant.from(this.evaTokenTimestamp) : null;
-            return cloned;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError(); // Should never happen
-        }
-    }
-
-    public void deleteSessionCode() {
-        this.evaSessionCode = null;
-    }
 
 }

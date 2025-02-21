@@ -71,7 +71,6 @@ public class HandOverService {
                                 sessionService.setDestination(SessionDestination.BOT, composedUserID);
                                 log.info("Human agent changes the destination to bot");
 
-                                sessionService.saveSession(composedUserID);
                                 log.info("session saved: {}", sessionService.toString(composedUserID));
             
                                 return true; // Remove this message from the array

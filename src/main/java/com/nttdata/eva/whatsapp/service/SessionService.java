@@ -16,7 +16,6 @@ import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.SessionDestination;
 import com.nttdata.eva.whatsapp.model.UserSessionData;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -37,19 +36,19 @@ public class SessionService {
     //private String userID;
     //private UserSessionData sessionData;
 
-    @Getter
-    private BrokerConfiguration brokerConfig;
+  
 
 
     public Boolean InitCacheHandover(String userID, BrokerConfiguration brokerConfig) {
-        this.brokerConfig = brokerConfig;
+      
 
         return validateUserHandover(userID);
     }
 
     public void InitCache(String userID, BrokerConfiguration brokerConfig) {
-        this.brokerConfig = brokerConfig;
-        cacheManager.printCacheState(userID);
+        if (!cacheManager.containsUser(userID)) {
+            cacheManager.addToCache(userID, new UserSessionData());
+        }
     }
 
 
@@ -78,12 +77,14 @@ public class SessionService {
     public String getWelcomeback(String userID) {
         return cacheManager.getFromCache(userID).getWelcomeBack();
     }
+    public void deleteEvaToken(String userID) {
+        cacheManager.getFromCache(userID).setEvaToken(null);
+    }
 
-    public String getEvaToken(String userID) {
-        if (cacheManager.getFromCache(userID).getEvaToken() == null
-                || Instant.now().minusSeconds(850).isAfter(cacheManager.getFromCache(userID).getEvaTokenTimestamp())) {
-            cacheManager.getFromCache(userID).setEvaToken(generateToken(userID));
-            updateTokenTimestamp(userID);
+    public String getEvaToken(String userID, BrokerConfiguration brokerConfig) {
+        if (cacheManager.getFromCache(userID).getEvaToken() == null) {
+            //get new token
+                cacheManager.getFromCache(userID).setEvaToken(generateToken(userID, brokerConfig));
         }
 
         return cacheManager.getFromCache(userID).getEvaToken();
@@ -94,11 +95,8 @@ public class SessionService {
         cacheManager.getFromCache(userID).setEvaSessionCode(sessionCode);
     }
 
-    public void deleteToken(String userID) {
-        cacheManager.getFromCache(userID).setEvaToken(null);
-    }
 
-    private String generateToken(String userID) {
+    private String generateToken(String userID, BrokerConfiguration brokerConfig) {
         log.info("Enter to function Token Gen TIME: {}", Instant.now());
 
         try {
@@ -123,7 +121,7 @@ public class SessionService {
 
             if (mapResult != null && mapResult.containsKey("access_token")) {
                 log.info("Token generated successfully");
-                cacheManager.getFromCache(userID).deleteSessionCode();
+                cacheManager.getFromCache(userID).setEvaSessionCode(null);
                 return mapResult.get("access_token");
             } else {
                 log.error("Failed to generate token: No access token in response");
@@ -135,13 +133,8 @@ public class SessionService {
         }
     }
 
-    void updateTokenTimestamp(String userID) {
-        cacheManager.getFromCache(userID).setEvaTokenTimestamp(Instant.now());
-    }
-
-    public void saveSession(String userID) {
-        cacheManager.addToCache(userID, cacheManager.getFromCache(userID).clone());
-        log.info("Session saved for UserID: {}", userID);
+    public void saveSessionCode(String sessionCode, String userID) {
+        cacheManager.getFromCache(userID).setEvaSessionCode(sessionCode);
     }
 
     public void setDestination(SessionDestination destination, String userID) {
