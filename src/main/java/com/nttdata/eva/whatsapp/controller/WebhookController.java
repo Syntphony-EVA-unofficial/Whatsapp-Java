@@ -108,6 +108,7 @@ public class WebhookController {
         try {
             // Parse the request body into a JsonNode
             incommingData = objectMapper.readTree(requestBody);
+            log.info("incommingData: {}", incommingData);
             webhookData = objectMapper.treeToValue(incommingData, WebhookData.class);
         } catch (Exception e) {
             log.warn("Received unexpected data: {}", incommingData);

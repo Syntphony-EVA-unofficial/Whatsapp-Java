@@ -79,11 +79,11 @@ public class WebhookData {
     }
 
     @Data
-    public class ImageData {
-    private String caption;
-    private String sha256;
-    private String id;
-    private String mime_type;
+    public static class ImageData {
+        private String caption;
+        private String sha256;
+        private String id;
+        private String mime_type;
     }
 
 

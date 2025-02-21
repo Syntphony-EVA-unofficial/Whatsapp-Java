@@ -56,6 +56,7 @@ public class SessionService {
         this.userID = userID;
         this.brokerConfig = brokerConfig;
         sessionData = cacheManager.getFromCache(userID);
+        cacheManager.printCacheState(sessionData.getEvaSessionCode());
     }
 
 

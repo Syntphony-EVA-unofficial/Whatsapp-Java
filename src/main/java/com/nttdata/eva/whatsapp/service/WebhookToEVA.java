@@ -142,6 +142,7 @@ public class WebhookToEVA {
             BrokerConfiguration brokerConfig) {
         try {
             String type = message.getType();
+            log.info("message: {}", message);
             if (type != null) {
                 switch (type) {
                     case "text":
@@ -205,25 +206,11 @@ public class WebhookToEVA {
     }
 
     private EVARequestTuple handleImage(Message message, BrokerConfiguration brokerConfig) {
-
-        log.info("Handling image emessage");
-        try {
-
-            String imageID = message.getImage().getId();
-            String imageURL = whatsappMediaUtils.getImageURL(imageID, brokerConfig.getMetaConfig().getAccessToken());
-            ObjectNode context = objectMapper.createObjectNode();
-            ObjectNode audioMessageNode = context.putObject("image_message");
-            audioMessageNode.put("imageURL", imageURL);
-            return new EVARequestTuple(null, context);
-
-        } catch (Exception e) {
-            log.warn("Image message could not be processed", e);
-        }
-
+        log.info("Handling image message");
         String EVA_content = " ";
-        ObjectNode evaContextNode = objectMapper.createObjectNode();
-        evaContextNode.put("templateClicked", true);
-        return new EVARequestTuple(EVA_content, evaContextNode);
+        ObjectNode context = objectMapper.createObjectNode();
+        context.put("message_type", "image");
+        return new EVARequestTuple(EVA_content, context);
     }
 
     private EVARequestTuple handleButtonTemplate(Message message) {
