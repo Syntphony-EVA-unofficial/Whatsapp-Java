@@ -121,7 +121,6 @@ public class SessionService {
 
             if (mapResult != null && mapResult.containsKey("access_token")) {
                 log.info("Token generated successfully");
-                cacheManager.getFromCache(userID).setEvaSessionCode(null);
                 return mapResult.get("access_token");
             } else {
                 log.error("Failed to generate token: No access token in response");
