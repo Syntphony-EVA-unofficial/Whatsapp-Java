@@ -49,7 +49,7 @@ public class WebhookService {
             String userPhone = message.getFrom();
             String userID = message.getFrom() + "-" + phoneId;
             
-            sessionService.InitCache(brokerConfig);
+            sessionService.InitCache(userID, brokerConfig);
             log.info("Current STARTING session state: {}", sessionService.toString());
 
             // Check if user is in human agent mode

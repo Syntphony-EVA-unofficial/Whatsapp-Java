@@ -47,8 +47,9 @@ public class SessionService {
         return validateUserHandover(userID);
     }
 
-    public void InitCache(BrokerConfiguration brokerConfig) {
+    public void InitCache(String userID, BrokerConfiguration brokerConfig) {
         this.brokerConfig = brokerConfig;
+        cacheManager.printCacheState(userID);
     }
 
 

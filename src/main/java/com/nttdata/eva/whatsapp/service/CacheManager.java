@@ -55,4 +55,23 @@ public class CacheManager {
         UserSessionData newSessionData = new UserSessionData();
         return newSessionData;
     }
+
+    public void printCacheState(String evaSessionCode) {
+        System.out.println("=== Estado actual del Cache ===");
+        System.out.println("Número total de usuarios en cache: " + getSize());
+        
+        if (cacheUser.isEmpty()) {
+            System.out.println("El cache está vacío");
+            return;
+        }
+
+        cacheUser.forEach((key, userData) -> {
+            System.out.println("\nUsuario Key: " + key);
+            System.out.println("Destino: " + userData.getDestination());
+            System.out.println("Última interacción: " + userData.getLastInteractionTime());
+            System.out.println("Eva Session Code: " + userData.getEvaSessionCode());
+            // Puedes agregar más campos según la estructura de UserSessionData
+        });
+        System.out.println("============================");
+    }
 }
