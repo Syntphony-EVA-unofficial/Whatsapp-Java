@@ -140,16 +140,21 @@ public class WebhookController {
                 for (String key : keys) {
                     log.debug(key);
                 }
-
+                log.error("Phone ID {} does not exist in the map", phoneId);
                 return ResponseEntity.status(400).body("Invalid request: Phone ID does not exist.");
             }
 
             String appSecret = brokerConfig.getMetaConfig().getAppSecret();
             // Validate the signature
             if (webhookUtils.checkSignature(request, requestBody, appSecret)) {
-                // Process the incoming message
-                webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, incommingData);
-                return ResponseEntity.ok("Request processed successfully.");
+                try {
+                    // Process the incoming message
+                    webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, incommingData);
+                } catch (Exception e) {
+                    log.error("Error processing message in Incomming message", e);
+                    return ResponseEntity.status(HttpStatus.OK).body("Error in Eva");
+                }
+                return ResponseEntity.status(HttpStatus.OK).body("Request processed successfully.");
             } else {
                 return ResponseEntity.ok("Invalid signature.");
             }
