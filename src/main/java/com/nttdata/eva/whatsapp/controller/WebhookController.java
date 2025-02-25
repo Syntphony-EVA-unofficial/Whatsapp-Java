@@ -2,6 +2,7 @@ package com.nttdata.eva.whatsapp.controller;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -147,16 +148,18 @@ public class WebhookController {
             String appSecret = brokerConfig.getMetaConfig().getAppSecret();
             // Validate the signature
             if (webhookUtils.checkSignature(request, requestBody, appSecret)) {
-                try {
-                    // Process the incoming message
-                    webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, incommingData);
-                } catch (Exception e) {
-                    log.error("Error processing message in Incomming message", e);
-                    return ResponseEntity.status(HttpStatus.OK).body("Error in Eva");
-                }
-                return ResponseEntity.status(HttpStatus.OK).body("Request processed successfully.");
+                // Process message asynchronously
+                final JsonNode finalIncomingData = incommingData;
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, finalIncomingData);
+                    } catch (Exception e) {
+                        log.error("Error processing message in Incoming message", e);
+                    }
+                });
+                return ResponseEntity.status(HttpStatus.OK).body("Request received");
             } else {
-                return ResponseEntity.ok("Invalid signature.");
+                return ResponseEntity.status(HttpStatus.OK).body("Invalid signature");
             }
         } catch (JsonProcessingException e) {
             log.error("Failed to log incoming data: {}", e.getMessage());
