@@ -286,7 +286,10 @@ public class WebhookToEVA {
                 sessionService.setEvaSessionCode(responseModel.getSessionCode(), userID);
                 return responseModel;
             } catch (HttpClientErrorException e) {
-                if (e.getStatusCode().value() == 401) {
+                if (e.getStatusCode().value() == 504) {
+                    log.error("Gateway Timeout (504) error, stopping retries", e);
+                    break;
+                } else if (e.getStatusCode().value() == 401) {
                     log.warn("Unauthorized error (401), refreshing token and retrying", e);
                     sessionService.deleteEvaToken(userID);
                     sessionService.getEvaToken(userID, brokerConfig);
