@@ -19,6 +19,7 @@ import com.nttdata.eva.whatsapp.model.BrokerConfiguration;
 import com.nttdata.eva.whatsapp.model.HandoverMessage;
 import com.nttdata.eva.whatsapp.model.WebhookData;
 import com.nttdata.eva.whatsapp.service.HandOverService;
+import com.nttdata.eva.whatsapp.service.MessageDeduplicationService;
 import com.nttdata.eva.whatsapp.service.WebhookService;
 import com.nttdata.eva.whatsapp.utils.ConfigLoader;
 import com.nttdata.eva.whatsapp.utils.WebhookUtils;
@@ -43,6 +44,9 @@ public class WebhookController {
 
     @Autowired
     private ConfigLoader configLoader;
+
+    @Autowired
+    private MessageDeduplicationService deduplicationService;
 
     @GetMapping("/meta-events")
     public ResponseEntity<String> verifyWebhook(HttpServletRequest request) {
@@ -150,13 +154,23 @@ public class WebhookController {
             if (webhookUtils.checkSignature(request, requestBody, appSecret)) {
                 // Process message asynchronously
                 final JsonNode finalIncomingData = incommingData;
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, finalIncomingData);
-                    } catch (Exception e) {
-                        log.error("Error processing message in Incoming message", e);
+                if (webhookData.getEntry() != null && !webhookData.getEntry().isEmpty()) {
+                    String messageId = webhookData.getEntry().get(0).getChanges().get(0).getValue().getMessages().get(0).getId();
+                    
+                    if (!deduplicationService.isMessageProcessed(messageId)) {
+                        deduplicationService.markMessageAsProcessed(messageId);
+                        // Process message
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                webhookService.processIncomingMessage(webhookData, request, brokerConfig, phoneId, finalIncomingData);
+                            } catch (Exception e) {
+                                log.error("Error processing message in Incoming message", e);
+                            }
+                        });
+                    } else {
+                        log.info("Duplicate message received, skipping processing: {}", messageId);
                     }
-                });
+                }
                 return ResponseEntity.status(HttpStatus.OK).body("Request received");
             } else {
                 return ResponseEntity.status(HttpStatus.OK).body("Invalid signature");
